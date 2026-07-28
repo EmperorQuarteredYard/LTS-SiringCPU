@@ -1,0 +1,1 @@
+本项目(Siring-Long Term Servering,骑鳞芯片-LTS)主要在FPGA:xc7a200tfbg676-1上开发
