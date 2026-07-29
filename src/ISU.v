@@ -61,8 +61,8 @@ reg reg_lock_rd;
 reg reg_unlock_rd;
 
 // assign GPR[wire_EXU_rd[4:0]] = (wire_EXU_rd!= 5'b0 & wire_wb_en)?wire_EXU_res:32'b0;
-assign IDU_GPR_data1 = GPR[IDU_GPR_addr1]&{32{IDU_ISU_valid}};
-assign IDU_GPR_data2 = GPR[IDU_GPR_addr2]&{32{IDU_ISU_valid}};
+assign IDU_GPR_data1 = WBU_w_en&(EXU_ISU_rd == IDU_GPR_addr1)?EXU_ISU_res:GPR[IDU_GPR_addr1]&{32{IDU_ISU_valid}};//如果EXU在这个过程中产生了IDU正在访问的结果，那么返回EXU的值 注意！这里是非常危险的！不要复用！
+assign IDU_GPR_data2 = WBU_w_en&(EXU_ISU_rd == IDU_GPR_addr2)?EXU_ISU_res:GPR[IDU_GPR_addr2]&{32{IDU_ISU_valid}};
 wire wire_lock_rd;
 wire wire_unlock_rd;
 `endif
@@ -87,10 +87,12 @@ always @(posedge clk) begin
     end
     else if(IDU_ISU_handshake)begin
         // reg_RAM_rdata <= 
-        GPR[reg_EXU_rd]<= reg_EXU_res;
         reg_st_en <= MEM_st_en;
         reg_ld_en <= MEM_ld_en;
         reg_wb_en <= WBU_w_en;
+        if(WBU_w_en)begin
+            GPR[reg_EXU_rd]<= reg_EXU_res;//直接把WB提前了，解决了部分的数据冒险
+        end
     end
     
 end
