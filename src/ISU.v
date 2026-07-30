@@ -13,10 +13,6 @@ module ISU
 	input         IDU_ISU_PCmis,
 	output        ISU_IDU_ready,  //ISU IDU准备好信号
 
-    // input         RAM_IFU_valid,
-    // input  [31:0] RAM_IFU_rdata,
-    // output        IFU_RAM_ready,
-
     output        ISU_IFU_PCmis,
     output [31:0] ISU_IFU_PCnew,
 
@@ -57,8 +53,6 @@ assign ISU_IFU_PCnew = IDU_ISU_PCnew;
 `ifdef GPR_OPERATION
 reg [31:0] GPR [31:0];
 reg [31:0] GPR_lock;
-reg reg_lock_rd;
-reg reg_unlock_rd;
 
 // assign GPR[wire_EXU_rd[4:0]] = (wire_EXU_rd!= 5'b0 & wire_wb_en)?wire_EXU_res:32'b0;
 assign IDU_GPR_data1 = WBU_w_en&(EXU_ISU_rd == IDU_GPR_addr1)?EXU_ISU_res:GPR[IDU_GPR_addr1]&{32{IDU_ISU_valid}};//如果EXU在这个过程中产生了IDU正在访问的结果，那么返回EXU的值 注意！这里是非常危险的！不要复用！
@@ -74,7 +68,7 @@ wire ISU_EXU_handshake;
 assign IDU_ISU_handshake = IDU_ISU_valid & ISU_IDU_ready;
 assign ISU_EXU_handshake = EXU_ISU_valid & ISU_EXU_ready;
 assign ISU_EXU_ready = 1'b1;
-assign ISU_IDU_ready = 1'b1;
+assign ISU_IDU_ready = GPR_lock[EXU_ISU_rd] & EXU_ISU_rd!=0 ;//如果访问到被锁存的内容，则返回"没准备好"
 `endif
 always @(posedge clk) begin
     if (rst)begin
@@ -90,6 +84,9 @@ always @(posedge clk) begin
         reg_st_en <= MEM_st_en;
         reg_ld_en <= MEM_ld_en;
         reg_wb_en <= WBU_w_en;
+        if(reg_ld_en)begin
+            GPR_lock[reg_EXU_rd] <= 1;
+        end
         if(WBU_w_en)begin
             GPR[reg_EXU_rd]<= reg_EXU_res;//直接把WB提前了，解决了部分的数据冒险
         end

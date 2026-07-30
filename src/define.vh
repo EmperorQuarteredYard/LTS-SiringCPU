@@ -1,4 +1,10 @@
+//========================全局设置============================
+`define PC_LENGTH 32//在本项目中，如果区分ExtRAM和BaseRAM，那么可以将PC缩短到21位
+`define INSTRUCTION_LENGTH 32
 `define ENVIRONMENT_FPGA
+`define BASE_RAM_PRE_ADDR    10'b0001110000
+`define EXT_RAM_PRE_ADDR     10'b0001110001
+`define UART_WINDOW_PRE_ADDR 12'b000111110000
 //========================缺省值==============================
 `define RST_PC          32'h1c000000//实际上应该是1c000000，这里省去了一拍的进位(应当需要根据实际情况判断)
 

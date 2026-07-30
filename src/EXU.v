@@ -17,6 +17,22 @@ module EXU(
     output        MEM_ld_en,
     output        WBU_w_en,
     input         ISU_EXU_ready
+    // 待添加：
+    
+	// .data_requ_valid(data_requ_valid),
+	// .data_requ_addr (data_requ_addr),
+	// .data_requ_type (data_requ_type),
+	// .data_requ_wdata(data_requ_wdata),
+	// .data_requ_wstrb(data_requ_wstrb),
+	// .data_requ_ready(data_requ_ready),
+
+	// .data_resp_valid(data_resp_valid),
+	// .data_resp_rdata(data_resp_rdata),
+	// .data_resp_ready(data_resp_ready),
+
+	// .WBU_ISU_wen  (WBU_ISU_wen),
+	// .WBU_ISU_waddr(WBU_ISU_waddr),
+	// .WBU_ISU_wdata(WBU_ISU_wdata)
 );
 reg [31:0] reg_rs1;
 reg [31:0] reg_rs2;
