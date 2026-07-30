@@ -28,7 +28,7 @@ assign inst    =  cac_inst[addr_id];
 assign valid   =  cac_hit && !rst && (reg_state == 2'b00);
 
 assign IFU_RAM_valid = (reg_state == 2'b01) & !rst;
-assign IFU_RAM_raddr = {1'b0, PC};
+assign IFU_RAM_raddr = PC;
 assign IFU_RAM_ready = (reg_state == 2'b10) & !rst;
 
 

@@ -1,19 +1,21 @@
 module TOP(
     input clk,
     input rstn,
+    // BASE SRAM
+    output [19:0] BASERAM_a,
+    inout  [31:0] BASERAM_dq,
+    output        BASERAM_oe_n,
+    output        BASERAM_we_n,
+    output        BASERAM_ce_n,
+    output [3:0]  BASERAM_be_n,
 
-	output        requ_valid,
-    output [21:0] requ_addr,        //对于EXTRAM、BASERAM，其开头均为0b00011100 0，故仅需23位
-    output        requ_type,        // 请求类别，0读1写
-    output [31:0] requ_wdata,
-    output [ 3:0] requ_wstrb,       // 写请求字节使能
-    output        requ_exdat,       // 是否独占
-    input         requ_ready,
-
-    input         resp_valid,
-    input  [31:0] resp_rdata,
-    input         resp_exdat,
-    output        resp_ready
+    // EXT SRAM
+    output [19:0] EXTRAM_a,
+    inout  [31:0] EXTRAM_dq,
+    output        EXTRAM_oe_n,
+    output        EXTRAM_we_n,
+    output        EXTRAM_ce_n,
+    output [3:0]  EXTRAM_be_n
 
 );
 wire rst;
@@ -60,6 +62,41 @@ wire ISU_EXU_ready;
 
 wire EXU_IDU_ready;
 
+module MEM#(
+    parameter SRAM_WAIT_CYCLES = 2   // 根据时钟频率调整，至少 2
+)(
+    .clk(clk),
+    .rst(rst),
+    .EXU_MEM_valid(),
+    .EXU_MEM_wen(),
+    .EXU_MEM_ren(),
+    .EXU_MEM_wdata(),
+    .EXU_MEM_addr(),
+    .EXU_MEM_rd(),
+    .MEM_EXU_ready(),
+    .MEM_WBU_valid(),
+    .MEM_WBU_data(),
+    .MEM_WBU_rd(),
+    .WBU_MEM_ready(),
+    .IFU_MEM_valid(),
+    .IFU_MEM_en(),
+    .IFU_MEM_PC(),
+    .MEM_IFU_inst(),
+    .MEM_IFU_ready(),
+    .MEM_IFU_finish(),
+    .BASERAM_a(BASERAM_a),
+    .BASERAM_dq(BASERAM_dq),
+    .BASERAM_oe_n(BASERAM_oe_n),
+    .BASERAM_we_n(BASERAM_we_n),
+    .BASERAM_ce_n(BASERAM_ce_n),
+    .BASERAM_be_n(BASERAM_be_n),
+    .EXTRAM_a(EXTRAM_a),
+    .EXTRAM_dq(EXTRAM_dq),
+    .EXTRAM_oe_n(EXTRAM_oe_n),
+    .EXTRAM_we_n(EXTRAM_we_n),
+    .EXTRAM_ce_n(EXTRAM_ce_n),
+    .EXTRAM_be_n(EXTRAM_be_n)
+);
 IFU IFU(
     .clk(clk),
     .rst(rst),

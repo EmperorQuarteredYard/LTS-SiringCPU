@@ -69,16 +69,16 @@ assign wire_valid = reg_valid;
 
 `define EXTRAM_OPERATION
 `ifdef EXTRAM_OPERATION
-wire data_requ_valid;
-wire data_requ_addr;
-wire data_requ_type;
-wire data_requ_wdata;
-wire data_requ_wstrb;
-wire data_requ_exdat;
-wire data_requ_ready;
-wire data_resp_valid;
-wire data_resp_rdata;
-wire data_resp_ready;
+wire        data_requ_valid;
+wire [19:0] data_requ_addr;
+wire        data_requ_type;
+wire [31:0] data_requ_wdata;
+wire [ 3:0] data_requ_wstrb;
+wire        data_requ_exdat;
+wire        data_requ_ready;
+wire        data_resp_valid;
+wire [31:0] data_resp_rdata;
+wire        data_resp_ready;
 
 RAM EXTRAM(
     .clk(clk),
@@ -110,9 +110,9 @@ assign MEM_WBU_handshake = MEM_WBU_valid & WBU_MEM_ready;
 assign MEM_WBU_valid     = wire_valid&data_resp_valid;
 assign MEM_EXU_ready     = ((~wire_valid)|MEM_WBU_handshake) & data_requ_ready;
 assign data_requ_valid   = wire_valid;
-assign data_requ_addr    = EXU_MEM_addr;
-assign data_requ_type    = EXU_MEM_wen;
-assign data_requ_wdata   = EXU_MEM_wdata;
+assign data_requ_addr    = wire_addr[19:0];
+assign data_requ_type    = wire_wen;
+assign data_requ_wdata   = wire_wdata;
 assign data_requ_wstrb   = 4'b0;
 assign data_requ_exdat   = 1'b1;
 assign data_resp_ready   = 1'b1;
@@ -123,19 +123,19 @@ assign MEM_WBU_data      = data_resp_rdata;
 
 `define BASERAM_OPERATION
 `ifdef BASERAM_OPERATION
-wire inst_requ_valid;
-wire inst_requ_addr;
-wire inst_requ_type;
-wire inst_requ_wdata;
-wire inst_requ_wstrb;
-wire inst_requ_exdat;
-wire inst_requ_ready;
-wire inst_resp_valid;
-wire inst_resp_rdata;
-wire inst_resp_ready;
+wire        inst_requ_valid;
+wire [19:0] inst_requ_addr;
+wire        inst_requ_type;
+wire [31:0] inst_requ_wdata;
+wire [ 3:0] inst_requ_wstrb;
+wire        inst_requ_exdat;
+wire        inst_requ_ready;
+wire        inst_resp_valid;
+wire [31:0] inst_resp_rdata;
+wire        inst_resp_ready;
 
 assign inst_requ_valid = IFU_MEM_valid & IFU_MEM_en;
-assign inst_requ_addr  = IFU_MEM_PC;
+assign inst_requ_addr  = IFU_MEM_PC[19:0];
 assign inst_requ_type  = 1'b0;
 assign inst_requ_wdata = 32'b0;
 assign inst_requ_wstrb = 4'b0;
