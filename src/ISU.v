@@ -19,7 +19,6 @@ module ISU
     input         EXU_ISU_valid,
     input  [ 4:0] EXU_ISU_rd,
     input  [31:0] EXU_ISU_res,
-    input         MEM_st_en,
     input         MEM_ld_en,
     input         WBU_w_en,
     output        ISU_EXU_ready
@@ -29,21 +28,18 @@ module ISU
 // reg [31:0] reg_RAM_rdata;
 reg [ 4:0] reg_EXU_rd;
 reg [31:0] reg_EXU_res;
-reg        reg_st_en;
 reg        reg_ld_en;
 reg        reg_wb_en;
 
 // wire [31:0] wire_RAM_rdata;
 wire [ 4:0] wire_EXU_rd;
 wire [31:0] wire_EXU_res;
-wire        wire_st_en;
 wire        wire_ld_en;
 wire        wire_wb_en;
 
 assign wire_RAM_rdata = reg_RAM_rdata;
 assign wire_EXU_rd    = reg_EXU_rd;
 assign wire_EXU_res   = reg_EXU_res;
-assign wire_st_en     = reg_st_en;
 assign wire_ld_en     = reg_ld_en;
 assign wire_wb_en     = reg_wb_en;
 `endif
@@ -75,13 +71,11 @@ always @(posedge clk) begin
         // reg_RAM_rdata <= 32'b0;
         reg_EXU_rd <= 5'b0;
         reg_EXU_res <= 32'b0;
-        reg_st_en <= 1'b0;
         reg_ld_en <= 1'b0;
         reg_wb_en <= 1'b0;
     end
     else if(IDU_ISU_handshake)begin
         // reg_RAM_rdata <= 
-        reg_st_en <= MEM_st_en;
         reg_ld_en <= MEM_ld_en;
         reg_wb_en <= WBU_w_en;
         if(reg_ld_en)begin

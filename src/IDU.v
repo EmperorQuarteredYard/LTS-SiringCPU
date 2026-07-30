@@ -14,12 +14,6 @@ module IDU
 	output [ 4:0] IDU_GPR_addr2,
 	input  [31:0] IDU_GPR_data1,
 	input  [31:0] IDU_GPR_data2,//IDU通过ISU访问GPR；GPR的读行为不需要经过一拍
-    // output [ 4:0] IDU_GPR_rkaddr,
-    // output [ 4:0] IDU_GPR_rjaddr,
-    // output [ 4:0] IDU_GPR_rdaddr,
-    // input  [31:0] GPR_IDU_rkdata,
-    // input  [31:0] GPR_IDU_rjdata,
-    // input  [31:0] GPR_IDU_rddata,
 
 	output [31:0] IDU_ISU_PCnew,
 	output        IDU_ISU_PCmis,
@@ -29,8 +23,8 @@ module IDU
 	output [31:0] IDU_EXU_rs1,
 	output [31:0] IDU_EXU_rs2,
 	output [ 3:0] IDU_EXU_ope,
-	output [ 4:0] IDU_EXU_rd,
-	output [10:0] IDU_EXU_func,//这里描述得到的结果是什么含义，0-0-0-0-0-0-0-0-st-ld-alu运算
+	output [ 4:0] IDU_EXU_rd,//当不写回寄存器时，rd为0，LoongArch特性
+	output [10:0] IDU_EXU_func,//这里描述得到的结果是什么含义，0-0-0-0-0-0-0-0-st-ld-alu运算——感觉自己白做了个ALU使能
 	input  [31:0] EXU_IDU_ready
 );
 `include "define.vh"

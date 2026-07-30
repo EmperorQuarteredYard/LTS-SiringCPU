@@ -25,3 +25,12 @@
 `define alu_opasr  4'hd;
 `define alu_oprcl  4'he;
 `define alu_oprcr  4'hf;
+//========================AXI状态约定=========================
+`define AXI_IDLE       4'd0,
+`define AXI_WR_ADDR    4'd1,
+`define AXI_WR_START   4'd2,
+`define AXI_WR_WAIT    4'd3,
+`define AXI_WR_DONE    4'd4,
+`define AXI_READ_START 4'd5,
+`define AXI_READ_WAIT  4'd6,
+`define AXI_READ_DONE  4'd7;

@@ -13,7 +13,6 @@ module EXU(
     output        EXU_ISU_valid,
     output [ 4:0] EXU_ISU_rd,
     output [31:0] EXU_ISU_res,
-    output        MEM_st_en,
     output        MEM_ld_en,
     output        WBU_w_en,
     input         ISU_EXU_ready
@@ -49,12 +48,19 @@ wire [ 4:0] wire_rd;
 wire [10:0] wire_func;
 wire [31:0] wire_res;
 wire        wire_valid;
+wire        wire_st_en;
+wire        wire_ld_en;
+wire        wire_alu_en;
 
 assign wire_rs1  = reg_rs1;
 assign wire_rs2  = reg_rs2;
 assign wire_ope  = reg_ope;
 assign wire_rd   = reg_rd;
 assign wire_func = reg_func;
+
+assign wire_st_en = wire_func[2];
+assign wire_ld_en = wire_func[1];
+assign wire_alu_en  = wire_func[0];
 ALU ALU(
     .op(wire_ope),
     .src1(wire_rs1),
@@ -73,9 +79,8 @@ assign EXU_ISU_rd    = wire_rd;
 assign EXU_ISU_res   = wire_res;
 assign EXU_ISU_valid = wire_valid;
 assign EXU_IDU_ready = (~wire_valid) | (EXU_ISU_handshake);
-assign MEM_st_en = wire_func[2];
-assign MEM_ld_en = wire_func[1];
-assign WBU_w_en  = wire_func[0];
+assign MEM_ld_en     = wire_ld_en;
+assign WBU_w_en     = wire_rd == 5'b0;//做双重保险
 
 always @(posedge clk) begin
     if(rst)begin
