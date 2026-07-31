@@ -74,7 +74,6 @@ wire EXU_MEM_wdata;
 MEM MEM(
     .clk(clk),
     .rst(rst),
-
     .EXU_MEM_valid(EXU_MEM_valid),
     .EXU_MEM_wen(MEM_st_en),
     .EXU_MEM_ren(MEM_ld_en),
@@ -92,7 +91,6 @@ MEM MEM(
     .RAM_IFU_rdata(RAM_IFU_rdata),
     .MEM_IFU_ready(RAM_IFU_ready),
     .MEM_IFU_finish(RAM_IFU_valid),
-
     .BASERAM_a(BASERAM_a),
     .BASERAM_dq(BASERAM_dq),
     .BASERAM_oe_n(BASERAM_oe_n),
