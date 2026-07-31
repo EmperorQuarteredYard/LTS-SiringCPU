@@ -89,7 +89,7 @@ assign prd_PC = reg_PC+imm_lst[{offb16,offb26}];
 
 always @(posedge clk) begin
     if(rst)begin
-		reg_PC <= RST_PC;
+		reg_PC <= `RST_PC;
 		reg_id <= 2'b00;
     end
     else if(IFU_IDU_handshake)begin

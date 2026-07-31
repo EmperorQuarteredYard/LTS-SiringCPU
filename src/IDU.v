@@ -260,22 +260,22 @@ assign IDU_EXU_wdata = IDU_GPR_rd;
 wire rd_wb_en;
 
 assign rd_wb_en = inst_lu12i_w|inst_pcaddu12i|inst_addi_w|inst_add_w|inst_sub_w|inst_slt|inst_and|inst_andi|inst_or|inst_ori|inst_xor|inst_sll_w|inst_slli_w|inst_srli_w|inst_mul_w|inst_jirl|inst_bl;
-assign IDU_EXU_ope =alu_opadd & {4{inst_lu12i_w|inst_pcaddu12i|inst_addi_w|inst_add_w|inst_ld_o_st|inst_bl|inst_jirl}}|//其实这里不用写这么多的..毕竟alu_oppadd是0，但为了保留拓展性
-                    alu_opmux  & {4{inst_mul_w}}|
-                    alu_opsub  & {4{inst_sub_w}}|
-                    // alu_opequ  & {4{0}}|
-                    alu_opslt  & {4{inst_slt}}|
-                    // alu_opsltu & {4{0}}|
-                    // alu_opneg  & {4{0}}|
-                    alu_opand  & {4{inst_and|inst_andi}}|
-                    alu_opor   & {4{inst_or|inst_ori}}|
-                    alu_opxor  & {4{inst_xor}}|
-                    // alu_opnot  & {4{0}}|
-                    alu_opsll  & {4{inst_sll_w|inst_slli_w}}|
-                    alu_opslr  & {4{inst_srli_w}};
-                    // alu_opasr  & {4{0}}|
-                    // alu_oprcl  & {4{0}}|
-                    // alu_oprc   & {4{0}};
+assign IDU_EXU_ope =`alu_opadd & {4{inst_lu12i_w|inst_pcaddu12i|inst_addi_w|inst_add_w|inst_ld_o_st|inst_bl|inst_jirl}}|//其实这里不用写这么多的..毕竟`alu_oppadd是0，但为了保留拓展性
+                    `alu_opmux  & {4{inst_mul_w}}|
+                    `alu_opsub  & {4{inst_sub_w}}|
+                    // `alu_opequ  & {4{0}}|
+                    `alu_opslt  & {4{inst_slt}}|
+                    // `alu_opsltu & {4{0}}|
+                    // `alu_opneg  & {4{0}}|
+                    `alu_opand  & {4{inst_and|inst_andi}}|
+                    `alu_opor   & {4{inst_or|inst_ori}}|
+                    `alu_opxor  & {4{inst_xor}}|
+                    // `alu_opnot  & {4{0}}|
+                    `alu_opsll  & {4{inst_sll_w|inst_slli_w}}|
+                    `alu_opslr  & {4{inst_srli_w}};
+                    // `alu_opasr  & {4{0}}|
+                    // `alu_oprcl  & {4{0}}|
+                    // `alu_oprc   & {4{0}};
 assign IDU_EXU_func = {1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,inst_st_x,inst_ld_x,rd_wb_en|inst_bl};
 assign IDU_EXU_rd   = rd & {5{rd_wb_en}} | {4'b0,inst_bl};
 `endif
