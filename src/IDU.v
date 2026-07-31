@@ -9,11 +9,13 @@ module IDU
 	input  [ 1:0] IFU_IDU_id,    //IFU ID输入
 	output        IDU_IFU_ready, //IDU IFU准备好信号
 
-	output        IDU_ISU_valid, //IDU ISU有效信号
-	output [ 4:0] IDU_GPR_addr1,
-	output [ 4:0] IDU_GPR_addr2,
-	input  [31:0] IDU_GPR_data1,
-	input  [31:0] IDU_GPR_data2,//IDU通过ISU访问GPR；GPR的读行为不需要经过一拍
+	output        IDU_ISU_valid, //IDU ISU有效信号——这里要不要改成IDU_GPR_valid呢？
+	output [ 4:0] IDU_GPR_rj,
+	output [ 4:0] IDU_GPR_rk,
+	output [ 4:0] IDU_GPR_rd,
+	input  [31:0] GPR_IDU_rj,
+	input  [31:0] GPR_IDU_rk,
+	input  [31:0] GPR_IDU_rd,//IDU通过ISU访问GPR；GPR的读行为不需要经过一拍
 
 	output [31:0] IDU_ISU_PCnew,
 	output        IDU_ISU_PCmis,
@@ -24,12 +26,11 @@ module IDU
 	output [31:0] IDU_EXU_rs2,
 	output [ 3:0] IDU_EXU_ope,
 	output [ 4:0] IDU_EXU_rd,//当不写回寄存器时，rd为0，LoongArch特性
-	output [10:0] IDU_EXU_func,//这里描述得到的结果是什么含义，0-0-0-0-0-0-0-0-st-ld-alu运算——感觉自己白做了个ALU使能
-	input  [31:0] EXU_IDU_ready
+	output [10:0] IDU_EXU_func,//这里描述得到的结果是什么含义，0-0-0-0-0-0-0-0-st-ld-wb(就是是不是R型指令)
+    output [31:0] IDU_EXU_wdata,
+	input         EXU_IDU_ready
 );
 `include "define.vh"
-`define OP_ANALYSE_FPGA
-`endif
 
 reg [31:0] reg_PC;
 reg [1:0]  reg_PCid;
@@ -44,7 +45,7 @@ wire IFU_IDU_handshake;
 wire ISU_IDU_handshake;
 wire IDU_EXU_handshake;
 
-assign IDU_IFU_ready = (IDU_EXU_handshake & ISU_IDU_handshake) | reg_valid;
+assign IDU_IFU_ready = (IDU_EXU_handshake & ISU_IDU_handshake) | ~reg_valid;
 assign IDU_EXU_valid = reg_valid & ISU_IDU_handshake;//由于GPR的读取是异步的，故本周期内能完成操作，必定取决于能否与ISU握手
 assign ISU_IDU_ready = 1'b1;
 
@@ -239,26 +240,26 @@ assign offs_en = offs16|offs26;
 
 `define VAL_ANALYSE//向下一阶段的传值解析
 `ifdef VAL_ANALYSE
-wire rk_en,rj_en,pc_en,rd_en_forcmp;
+wire [31:0] mem_addr;
+wire rk_en,rj_en,pc_en,rd_en;
 assign rk_en = inst_add_w|inst_and|inst_mul_w|inst_or|inst_sub_w|inst_slt|inst_xor|inst_sll_w|inst_beq|inst_bne;
 assign rj_en = rk_en|inst_addi_w|inst_andi|inst_ori|inst_slli_w|inst_srli_w|inst_ld_b|inst_ld_w|inst_st_b|inst_st_w|inst_jirl;//beq，bne，bl等跳转指令需要额外考虑
-assign rd_en_forcmp = inst_beq|inst_bne;//这两者需要立即读取ed并进行比较，且取代的是rk(src1)的位置
+assign rd_en = inst_beq|inst_bne;//这两者需要立即读取ed并进行比较，且取代的是rk(src1)的位置
 assign rd_addr_set_1=inst_bl;
 assign pc_en = inst_pcaddu12i;
-
-assign IDU_GPR_addr1 = rj & {5{rj_en}}| rd & {5{rd_en_forcmp}};
-assign IDU_GPR_addr2 = rk & {5{rk_en}};//如果使能信号为0的话就扔到r0，反正r0是正宗的垃圾桶，永远置零
-assign IDU_EXU_rs1 = IDU_GPR_data1&{32{rj_en}}|wire_PC&{32{pc_en}};
-assign IDU_EXU_rs2 = IDU_GPR_data2&{32{rk_en}}|imm&{32{imm_en}};
+assign IDU_GPR_rj = rj & {5{rk_en}};
+assign IDU_GPR_rk = rk & {5{rk_en}};
+assign IDU_GPR_rd = rd & {5{rk_en}};//为了避免意外访问到不需要的、被锁存的内容，这里指定在不访问时，将访问的寄存器指定为永远不该被锁定的r0(但是不排除哪个傻蛋会把r0给锁了，那就完蛋了)
+assign IDU_EXU_rs1 = IDU_GPR_rj&{32{rj_en}}|wire_PC&{32{pc_en}};
+assign IDU_EXU_rs2 = IDU_GPR_rk&{32{rk_en}}|imm&{32{imm_en}};
+assign IDU_EXU_wdata = IDU_GPR_rd;
 `endif
 
 `define OPE_ANALYSE//对下一阶段的操作的解析
 `ifdef OPE_ANALYSE
-wire alu_en;
-wire rd_en;
+wire rd_wb_en;
 
-assign alu_en = inst_lu12i_w|inst_pcaddu12i|inst_addi_w|inst_add_w|inst_sub_w|inst_slt|inst_and|inst_andi|inst_or|inst_ori|inst_xor|inst_sll_w|inst_slli_w|inst_srli_w|inst_ld_o_st|inst_mul_w|inst_jirl;
-assign rd_en = inst_lu12i_w|inst_pcaddu12i|inst_addi_w|inst_add_w|inst_sub_w|inst_slt|inst_and|inst_andi|inst_or|inst_ori|inst_xor|inst_sll_w|inst_slli_w|inst_srli_w|inst_mul_w|inst_jirl|inst_bl;
+assign rd_wb_en = inst_lu12i_w|inst_pcaddu12i|inst_addi_w|inst_add_w|inst_sub_w|inst_slt|inst_and|inst_andi|inst_or|inst_ori|inst_xor|inst_sll_w|inst_slli_w|inst_srli_w|inst_mul_w|inst_jirl|inst_bl;
 assign IDU_EXU_ope =alu_opadd & {4{inst_lu12i_w|inst_pcaddu12i|inst_addi_w|inst_add_w|inst_ld_o_st|inst_bl|inst_jirl}}|//其实这里不用写这么多的..毕竟alu_oppadd是0，但为了保留拓展性
                     alu_opmux  & {4{inst_mul_w}}|
                     alu_opsub  & {4{inst_sub_w}}|
@@ -275,16 +276,15 @@ assign IDU_EXU_ope =alu_opadd & {4{inst_lu12i_w|inst_pcaddu12i|inst_addi_w|inst_
                     // alu_opasr  & {4{0}}|
                     // alu_oprcl  & {4{0}}|
                     // alu_oprc   & {4{0}};
-assign IDU_EXU_func = {1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,inst_st_x,inst_ld_x,alu_en};
-assign IDU_EXU_rd   = rd & {5{rd_en}} | {4'b0,inst_bl};
+assign IDU_EXU_func = {1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,inst_st_x,inst_ld_x,rd_wb_en|inst_bl};
+assign IDU_EXU_rd   = rd & {5{rd_wb_en}} | {4'b0,inst_bl};
 `endif
-//记录我这里已经堆了200行的代码了，奈何这里的东西不好模块化
 
 `define JUM_ANALYSE//跳转指令处理
 `ifdef JUM_ANALYSE
 wire beq_jump;
-assign beq_jump = (IDU_GPR_data1 == IDU_GPR_data2);
-assign IDU_ISU_PCnew = (inst_jirl?IDU_GPR_data1:wire_PC) + (offs &{32{offs_en}});
+assign beq_jump = (GPR_IDU_rj == GPR_IDU_rd);
+assign IDU_ISU_PCnew = (inst_jirl?GPR_IDU_rj:wire_PC) + (offs &{32{offs_en}});
 assign IDU_ISU_PCmis = inst_jirl|inst_b|inst_bl|(inst_beq&beq_jump)|(inst_bne&~beq_jump);
 `endif
 

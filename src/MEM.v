@@ -12,15 +12,15 @@ module MEM#(
     input  [ 4:0] EXU_MEM_rd,
     output        MEM_EXU_ready,
     
-    output        MEM_WBU_valid,
-    output [31:0] MEM_WBU_data,
-    output [ 4:0] MEM_WBU_rd,
-    input         WBU_MEM_ready,
+    output        MEM_ISU_valid,
+    output [31:0] MEM_ISU_data,
+    output [ 4:0] MEM_ISU_rd,
+    input         ISU_MEM_ready,
 
     input         IFU_MEM_valid,
     input         IFU_MEM_en,
-    input  [31:0] IFU_MEM_PC,
-    output [31:0] MEM_IFU_inst,
+    input  [31:0] IFU_RAM_raddr,
+    output [31:0] RAM_IFU_rdata,
     output        MEM_IFU_ready,
     output        MEM_IFU_finish,
 
@@ -103,12 +103,12 @@ RAM EXTRAM(
 );
 
 wire EXU_MEM_handshake;
-wire MEM_WBU_handshake;
+wire MEM_ISU_handshake;
 
 assign EXU_MEM_handshake = EXU_MEM_valid & MEM_EXU_ready;
-assign MEM_WBU_handshake = MEM_WBU_valid & WBU_MEM_ready;
-assign MEM_WBU_valid     = wire_valid&data_resp_valid;
-assign MEM_EXU_ready     = ((~wire_valid)|MEM_WBU_handshake) & data_requ_ready;
+assign MEM_ISU_handshake = MEM_ISU_valid & ISU_MEM_ready;
+assign MEM_ISU_valid     = wire_valid&data_resp_valid;
+assign MEM_EXU_ready     = ((~wire_valid)|MEM_ISU_handshake) & data_requ_ready;
 assign data_requ_valid   = wire_valid;
 assign data_requ_addr    = wire_addr[19:0];
 assign data_requ_type    = wire_wen;
@@ -116,8 +116,8 @@ assign data_requ_wdata   = wire_wdata;
 assign data_requ_wstrb   = 4'b0;
 assign data_requ_exdat   = 1'b1;
 assign data_resp_ready   = 1'b1;
-assign MEM_WBU_rd        = wire_rd;
-assign MEM_WBU_data      = data_resp_rdata;
+assign MEM_ISU_rd        = wire_rd;
+assign MEM_ISU_data      = data_resp_rdata;
 
 `endif
 
@@ -135,14 +135,14 @@ wire [31:0] inst_resp_rdata;
 wire        inst_resp_ready;
 
 assign inst_requ_valid = IFU_MEM_valid & IFU_MEM_en;
-assign inst_requ_addr  = IFU_MEM_PC[19:0];
+assign inst_requ_addr  = IFU_RAM_raddr[19:0];
 assign inst_requ_type  = 1'b0;
 assign inst_requ_wdata = 32'b0;
 assign inst_requ_wstrb = 4'b0;
 assign inst_requ_exdat = 1'b0;
 assign MEM_IFU_ready   = inst_requ_ready;
 assign MEM_IFU_finish  = inst_resp_valid;
-assign inst_resp_rdata = MEM_IFU_inst;
+assign inst_resp_rdata = RAM_IFU_rdata;
 assign inst_resp_ready = 1'b1;
 
 RAM BASERAM(
