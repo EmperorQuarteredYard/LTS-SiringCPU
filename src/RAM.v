@@ -70,21 +70,18 @@ assign resp_rdata = {32{~reg_state[0]}} & reg_data
 assign resp_exdat = reg_exdat;
 assign requ_ready = requ_ready_w;
 
-// 时序逻辑：状态、计数器及数据锁存
 always @(posedge clk) begin
     if (rst) begin
         // 同步复位，清空状态和计数器
         reg_state  <= 2'b00;
         reg_cntrs  <= 2'b00;
-        // 数据寄存器不清零，但建议初始化（可选）
-        reg_addr   <= {RAM_ADDR_LENGTH{1'b0}};
+        reg_addr   <= {20{1'b0}};
         reg_data   <= 32'b0;
         reg_wstrb  <= 4'b0;
         reg_exdat  <= 1'b0;
     end else begin
         reg_state <= nxt_state_3;
         reg_cntrs <= nxt_cntrs;
-        // 新请求握手时锁存输入
         if (requ_shake) begin
             reg_addr  <= requ_addr;
             reg_data  <= requ_wdata;

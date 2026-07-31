@@ -71,9 +71,7 @@ wire MEM_EXU_ready;
 wire EXU_MEM_rd;
 wire EXU_MEM_wdata;
 
-module MEM#(
-    parameter SRAM_WAIT_CYCLES = 2   // 根据时钟频率调整，至少 2
-)(
+MEM MEM(
     .clk(clk),
     .rst(rst),
 
