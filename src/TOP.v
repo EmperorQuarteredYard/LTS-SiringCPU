@@ -75,20 +75,6 @@ MEM MEM(
     .clk(clk),
     .rst(rst),
 
-    .EXU_MEM_valid(),
-    .EXU_MEM_wen(),
-    .EXU_MEM_ren(),
-    .EXU_MEM_wdata(EXU_ISU_res),
-    .EXU_MEM_addr(EXU_MEM_addr),//这里是因为得到的结果既可以是写到。。。。？
-    .EXU_MEM_rd(EXU_MEM_rd),
-    .MEM_EXU_ready(MEM_EXU_ready),
-    .MEM_WBU_valid(),
-    .MEM_WBU_data(),
-    .MEM_WBU_rd(),
-    .WBU_MEM_ready(),
-    .IFU_MEM_valid(IFU_RAM_valid),
-    .IFU_MEM_en(IFU_RAM_ready),//这里其实并没有很明显地区分两个口
-
     .EXU_MEM_valid(EXU_MEM_valid),
     .EXU_MEM_wen(MEM_st_en),
     .EXU_MEM_ren(MEM_ld_en),
