@@ -1,97 +1,111 @@
-module RAM(
-    input         clk,
-    input         rst,
+module RAM#(
+    parameter MAX_WAIT_CYCLE = 3;//1-31
+    parameter MAX_TASK_CYCLE = 15;
+)(
+    .clk(clk),
+    .rst(rst),
 
-    // RAM硬件信号交互
-    inout  [31:0] RAM_data,               // 双向数据总线
-    output [19:0] RAM_addr,               // 地址（低20位）
-    output [ 3:0] RAM_be_n,               // 字节使能（低有效）
-    output        RAM_ce_n,               // 片选（低有效）
-    output        RAM_oe_n,               // 输出使能（低有效）
-    output        RAM_we_n,               // 写使能（低有效）
+    //外部 SRAM 物理接口
+    inout  [31:0] RAM_data,      // 双向数据总线：读时由SRAM驱动，写时由本模块驱动
+    output [19:0] RAM_addr,      // 字地址输出（物理地址右移2位后的低20位，按4字节对齐）
+    output [ 3:0] RAM_be_n,      // 字节写使能掩码（低有效）：[3]对应bit31:24, [0]对应bit7:0
+    output        RAM_ce_n,      // 芯片片选（低有效）：为0时选中SRAM进行访问
+    output        RAM_oe_n,      // 输出使能（低有效）：为0时SRAM将数据输出到RAM_data总线
+    output        RAM_we_n,      // 写使能（低有效）：为0时SRAM从RAM_data总线锁存数据
 
-    input         requ_valid,
-    input  [19:0] requ_addr,
-    input         requ_type,              // 0读 1写
-    input  [31:0] requ_wdata,
-    input  [ 3:0] requ_wstrb,
-    input         requ_exdat,
-    output        requ_ready,
+    //  上游请求通道（其他模块 -> RAM控制器）
+    input         requ_valid,    // 请求有效标志：高电平时表示当前请求有效
+    input  [19:0] requ_addr,     // 请求访问的目标字地址（已省略最低2位）
+    input         requ_type,     // 请求操作类型：0=读操作，1=写操作
+    input  [31:0] requ_wdata,    // 写操作时携带的待写入数据（读操作时忽略）
+    input  [ 3:0] requ_wstrb,    // 写操作时的字节选通掩码（高有效）：对应wdata的哪些字节要写入
+    input         requ_exdat,    // 请求携带的外部异常/扩展状态（如非对齐、特权级错误等）
+    output        requ_ready,    // 请求握手的“就绪”信号：高表示当前控制器空闲，可接收新请求
 
-    output        resp_valid,
-    output [31:0] resp_rdata,
-    output        resp_exdat,
-    input         resp_ready
+    //  下游响应通道（RAM控制器 -> 其他模块）
+    output        resp_valid,    // 响应有效标志：高电平时表示下游可以接收当前响应数据
+    output [31:0] resp_rdata,    // 读操作返回的数据（写操作时无意义或置0）
+    output        resp_exdat,    // 响应携带的异常/扩展状态（透传自requ_exdat或读异常标志）
+    input         resp_ready     // 下游接收端的“就绪”信号：高表示CPU已准备好接收响应数据
 );
 
-localparam Tcyc = 4;  // SRAM访问等待周期数（可调）
+reg [ 4:0] wait_cycle;
+reg [ 4:0] task_cycle;
+reg [ 1:0] reg_cntrs ;
+reg [19:0] reg_addr  ;
+reg [31:0] reg_data  ;
+reg [ 3:0] reg_wstrb ;
+reg        reg_exdat ;
+reg        reg_entype;
+reg [31:0] reg_rdata ;
+reg        reg_valid ;
 
-// 内部寄存器
-reg  [19:0] reg_addr;
-reg  [31:0]                reg_data;
-reg  [ 3:0]                reg_wstrb;
-reg                        reg_exdat;
+wire [ 1:0] wire_cntrs;
+wire [19:0] wire_addr ;
+wire [31:0] wire_data ;
+wire [ 3:0] wire_wstrb;
+wire        wire_exdat;
+wire [ 1:0] nxt_stage ;
+wire        wire_we_n;//注意！这里已经是取反了的
+wire        wire_re_n;
 
-reg  [ 1:0] reg_state;    // 00空闲 01写 10读响应 11读
-reg  [ 1:0] reg_cntrs;    // 等待计数器
+assign wire_state  = reg_state ;
+assign wire_cntrs  = reg_cntrs ;
+assign wire_addr   = reg_addr  ;
+assign wire_data   = reg_data  ;
+assign wire_wstrb  = reg_wstrb ;
+assign wire_exdat  = reg_exdat ;
+assign wire_we_n   =~reg_entype;
+assign wire_re_n   = reg_entype;
+assign wire_valid  = reg_valid;
 
-wire [31:0] read_data = RAM_data;   // 读数据直接来自双向总线
+wire requ_handshake;
+wire resp_handshake;
 
-wire        end_cycle = (reg_cntrs == 0);
-wire [ 1:0] nxt_state_1 = reg_state & {1'b1, ~end_cycle};
+assign requ_handshake = requ_ready & requ_valid;
+assign resp_handshake = resp_ready & resp_valid;
 
-wire        resp_valid_w = (nxt_state_1 == 2'b10) & !rst;
-wire        resp_shake   = resp_valid_w & resp_ready;
-wire [ 1:0] nxt_state_2 = nxt_state_1 & {~resp_shake, 1'b1};
+assign RAM_be_n    = wire_wstrb;
+assign RAM_addr    = wire_addr;
+assign RAM_data    = wire_we_n?32'bz:wire_data;
+assign RAM_addr    = wire_addr;
+assign RAM_oe_n    = wire_we_n;
+assign RAM_we_n    = wire_re_n;
+assign RAM_ce_n    = wire_valid;
+assign resp_rdata  = resp_valid? 32'bz:(RAM_data&{{8{wire_wstrb[3]}},{8{wire_wstrb[2]}},{8{wire_wstrb[1]}},{8{wire_wstrb[0]}}});
+assign resp_valid = wait_cycle == 0 & (requ_addr == wire_addr)|(task_cycle == 0);
+assign resp_exdat = wire_exdat;
+assign requ_ready = ((wait_cycle == 0)&resp_handshake)|~wire_valid|(task_cycle == 0);
 
-wire        requ_ready_w = (nxt_state_2 == 2'b00) & !rst;
-wire        requ_shake   = requ_valid & requ_ready_w;
-wire [ 1:0] nxt_state_3 = (nxt_state_2 | {requ_shake & ~requ_type, requ_shake}) & {2{~rst}};
-
-// 计数器更新逻辑
-wire        cntr_ram_en = requ_shake;
-wire        cntr_m1_en  = (reg_cntrs != 2'b0);
-wire [ 1:0] nxt_cntrs = {2{cntr_ram_en}} & (Tcyc[1:0] - 2'b1)
-                      | {2{cntr_m1_en}}  & (reg_cntrs - 2'b1);
-// SRAM控制信号输出（组合逻辑）
-assign RAM_addr = reg_addr;
-assign RAM_be_n = ~reg_wstrb;                     // 低有效
-assign RAM_ce_n = ~reg_state[0] || rst;           // 非空闲时选中
-assign RAM_oe_n = ~reg_state[1];                  // 读或读响应态使能输出
-assign RAM_we_n =  reg_state[1];                  // 读时写无效，写时写有效
-
-// 三态数据总线：仅在写状态（01）驱动写数据，其他时刻高阻
-assign RAM_data = (reg_state == 2'b01) ? reg_data : 32'bz;
-
-// 响应输出
-assign resp_valid = resp_valid_w;
-assign resp_rdata = {32{~reg_state[0]}} & reg_data
-                  | {32{ reg_state[0]}} & read_data;
-assign resp_exdat = reg_exdat;
-assign requ_ready = requ_ready_w;
 
 always @(posedge clk) begin
     if (rst) begin
         // 同步复位，清空状态和计数器
         reg_state  <= 2'b00;
         reg_cntrs  <= 2'b00;
-        reg_addr   <= {20{1'b0}};
+        reg_addr   <= 20'b0;
         reg_data   <= 32'b0;
-        reg_wstrb  <= 4'b0;
+        reg_wstrb  <= 4'hf;
         reg_exdat  <= 1'b0;
+        reg_rdata  <= 32'b0;
+        reg_entype <= 1'b0;
+        reg_valid  <= 1'b0;
+        task_cycle <= MAX_TASK_CYCLE;
+        wait_cycle <= 4'b0;
     end else begin
-        reg_state <= nxt_state_3;
-        reg_cntrs <= nxt_cntrs;
-        if (requ_shake) begin
+        wait_cycle <= wait_cycle - (wait_cycle!=0);
+        task_cycle <= task_cycle - (task_cycle!=0);
+        if (requ_handshake) begin
+            wait_cycle<= MAX_WAIT_CYCLE&{5{~requ_type}};
+            task_cycle<= MAX_TASK_CYCLE;
+            reg_valid <= 1'b1;
             reg_addr  <= requ_addr;
             reg_data  <= requ_wdata;
             reg_wstrb <= requ_wstrb;
             reg_exdat <= requ_exdat;
+            reg_entype<= requ_type;
         end
         // 读访问的最后一个周期采样RAM数据
-        else if (reg_state == 2'b11 && end_cycle) begin
-            reg_data <= read_data;
-        end
     end
 end
 
