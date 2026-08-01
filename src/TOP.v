@@ -27,54 +27,54 @@ module TOP(
 wire rst;
 assign rst = ~rstn;
 
-wire IFU_IDU_valid;
-wire IFU_IDU_PC;
-wire IFU_IDU_inst;
-wire IFU_IDU_id;
-wire IDU_IFU_ready;
-wire ISU_IFU_PCmis;
-wire ISU_IFU_PCnew;
-wire IFU_RAM_valid;
-wire IFU_RAM_raddr;
-wire RAM_IFU_ready;
-wire RAM_IFU_valid;
-wire RAM_IFU_rdata;
-wire IFU_RAM_ready;
+wire        IFU_IDU_valid;
+wire [31:0] IFU_IDU_pc;
+wire [31:0] IFU_IDU_inst;
+wire [ 1:0] IFU_IDU_id;
+wire        IDU_IFU_ready;
+wire        ISU_IFU_PCmis;
+wire [31:0] ISU_IFU_PCnew;
+wire        IFU_RAM_valid;
+wire [31:0] IFU_RAM_raddr;
+wire        RAM_IFU_ready;
+wire        RAM_IFU_valid;
+wire [31:0] RAM_IFU_rdata;
+wire        IFU_RAM_ready;
 
-wire IDU_ISU_valid; //IDU ISU有效信号
-wire IDU_ISU_PCnew;
-wire IDU_ISU_PCmis;
-wire IDU_EXU_valid;
-wire IDU_EXU_rs1;
-wire IDU_EXU_rs2;
-wire IDU_EXU_ope;
-wire IDU_EXU_rd;
-wire IDU_EXU_wdata;
-wire IDU_EXU_func;//这里描述得到的结果是什么含义，0-0-0-0-0-0-0-0-st-ld-alu运算
+wire        IDU_ISU_valid; //IDU ISU有效信号
+wire [31:0] IDU_ISU_PCnew;
+wire        IDU_ISU_PCmis;
+wire        IDU_EXU_valid;
+wire [31:0] IDU_EXU_rs1;
+wire [31:0] IDU_EXU_rs2;
+wire [ 3:0] IDU_EXU_ope;
+wire [ 4:0] IDU_EXU_rd;
+wire [31:0] IDU_EXU_wdata;
+wire [10:0] IDU_EXU_func;//这里描述得到的结果是什么含义，0-0-0-0-0-0-0-0-st-ld-alu运算
 
-wire IDU_GPR_rj;
-wire IDU_GPR_rk;
-wire IDU_GPR_rd;
-wire GPR_IDU_rj;
-wire GPR_IDU_rk;
-wire GPR_IDU_rd;//IDU通过ISU访问GPR；GPR的读行为不需要经过一拍
-wire ISU_IDU_ready;  //ISU IDU准备好信号
-wire EXU_ISU_valid;
-wire EXU_ISU_rd;
-wire EXU_ISU_res;
-wire MEM_st_en;
-wire MEM_ld_en;
-wire ISU_wb_en;
-wire ISU_EXU_ready;
+wire [ 4:0] IDU_GPR_rj;
+wire [ 4:0] IDU_GPR_rk;
+wire [ 4:0] IDU_GPR_rd;
+wire [31:0] GPR_IDU_rj;
+wire [31:0] GPR_IDU_rk;
+wire [31:0] GPR_IDU_rd;//IDU通过ISU访问GPR；GPR的读行为不需要经过一拍
+wire        ISU_IDU_ready;  //ISU IDU准备好信号
+wire        EXU_ISU_valid;
+wire [ 4:0] EXU_ISU_rd;
+wire [31:0] EXU_ISU_res;
+wire        MEM_st_en;
+wire        MEM_ld_en;
+wire        ISU_wb_en;
+wire        ISU_EXU_ready;
 
 
-wire EXU_IDU_ready;
+wire        EXU_IDU_ready;
 
-wire EXU_MEM_addr;
-wire EXU_MEM_valid;
-wire MEM_EXU_ready;
-wire EXU_MEM_rd;
-wire EXU_MEM_wdata;
+wire [31:0] EXU_MEM_addr;
+wire        EXU_MEM_valid;
+wire        MEM_EXU_ready;
+wire [ 4:0] EXU_MEM_rd;
+wire [31:0] EXU_MEM_wdata;
 
 MEM MEM(
     .clk(clk),
@@ -90,7 +90,7 @@ MEM MEM(
     .MEM_ISU_data(MEM_ISU_data),
     .MEM_ISU_rd(MEM_ISU_rd),
     .ISU_MEM_ready(ISU_MEM_ready),
-    .IFU_MEM_valid(IFU_MEM_valid),
+    .IFU_MEM_valid(IFU_RAM_valid),
     .IFU_MEM_en(1'b1),//因为不知道写什么就干脆一直使能了
     .IFU_RAM_raddr(IFU_RAM_raddr),
     .RAM_IFU_rdata(RAM_IFU_rdata),
@@ -112,9 +112,10 @@ MEM MEM(
 IFU IFU(
     .clk(clk),
     .rst(rst),
-
+    // .o32_simulate(o32_simulate),
+    .o01_simulate(o01_simulate),
     .IFU_IDU_valid(IFU_IDU_valid),
-    .IFU_IDU_PC(IFU_IDU_PC),
+    .IFU_IDU_pc(IFU_IDU_pc),
     .IFU_IDU_inst(IFU_IDU_inst),
     .IFU_IDU_id(IFU_IDU_id),
     .IDU_IFU_ready(IDU_IFU_ready),
@@ -133,7 +134,7 @@ IDU IDU(
     .rst(rst),
 
     .IFU_IDU_valid(IFU_IDU_valid),
-    .IFU_IDU_PC(IFU_IDU_PC),
+    .IFU_IDU_pc(IFU_IDU_pc),
     .IFU_IDU_inst(IFU_IDU_inst),
     .IFU_IDU_id(IFU_IDU_id),
     .IDU_IFU_ready(IDU_IFU_ready),
@@ -202,6 +203,10 @@ ISU ISU(
 	.ISU_IDU_ready(ISU_IDU_ready),  //ISU IDU准备好信号
     .ISU_IFU_PCmis(ISU_IFU_PCmis),
     .ISU_IFU_PCnew(ISU_IFU_PCnew),
+    .MEM_ISU_valid(MEM_ISU_valid),
+    .MEM_ISU_data(MEM_ISU_data),
+    .MEM_ISU_rd(MEM_ISU_rd),
+    .ISU_MEM_ready(ISU_MEM_ready),
     .EXU_ISU_valid(EXU_ISU_valid),
     .EXU_ISU_rd(EXU_ISU_rd),
     .EXU_ISU_res(EXU_ISU_res),
@@ -218,8 +223,8 @@ ISU ISU(
 //     .douta(ram_rdata ) 
 // );
 `ifdef ENVIRONMENT_SIMULATE
-assign o32_simulate = 32'h12345678;
-assign o01_simulate = 1'b1;
+assign o32_simulate = IFU_IDU_pc;
+// assign o01_simulate = rst;
 `endif
 
 endmodule

@@ -28,7 +28,6 @@ module RAM#(
     output        resp_exdat,    // 响应携带的异常/扩展状态（透传自requ_exdat或读异常标志）
     input         resp_ready     // 下游接收端的“就绪”信号：高表示CPU已准备好接收响应数据
 );
-
 reg [ 4:0] wait_cycle;
 reg [ 4:0] task_cycle;
 reg [ 1:0] reg_cntrs ;
@@ -49,7 +48,6 @@ wire [ 1:0] nxt_stage ;
 wire        wire_we_n;//注意！这里已经是取反了的
 wire        wire_re_n;
 
-assign wire_state  = reg_state ;
 assign wire_cntrs  = reg_cntrs ;
 assign wire_addr   = reg_addr  ;
 assign wire_data   = reg_data  ;
@@ -65,13 +63,13 @@ wire resp_handshake;
 assign requ_handshake = requ_ready & requ_valid;
 assign resp_handshake = resp_ready & resp_valid;
 
-assign RAM_be_n    = wire_wstrb;
+assign RAM_be_n    =~wire_wstrb;
 assign RAM_addr    = wire_addr;
 assign RAM_data    = wire_we_n?32'bz:wire_data;
 assign RAM_addr    = wire_addr;
-assign RAM_oe_n    = wire_we_n;
-assign RAM_we_n    = wire_re_n;
-assign RAM_ce_n    = wire_valid;
+assign RAM_oe_n    = wire_re_n;
+assign RAM_we_n    = wire_we_n;
+assign RAM_ce_n    =~wire_valid;
 assign resp_rdata  = resp_valid? 32'bz:(RAM_data&{{8{wire_wstrb[3]}},{8{wire_wstrb[2]}},{8{wire_wstrb[1]}},{8{wire_wstrb[0]}}});
 assign resp_valid = wait_cycle == 0 & (requ_addr == wire_addr);
 assign resp_exdat = wire_exdat;
@@ -81,7 +79,6 @@ assign requ_ready = ((wait_cycle == 0)&resp_handshake)|~wire_valid|(task_cycle =
 always @(posedge clk) begin
     if (rst) begin
         // 同步复位，清空状态和计数器
-        reg_state  <= 2'b00;
         reg_cntrs  <= 2'b00;
         reg_addr   <= 20'b0;
         reg_data   <= 32'b0;
@@ -93,8 +90,8 @@ always @(posedge clk) begin
         task_cycle <= MAX_TASK_CYCLE;
         wait_cycle <= 4'b0;
     end else begin
-        wait_cycle <= wait_cycle - (wait_cycle!=0);
-        task_cycle <= task_cycle - (task_cycle!=0);
+        if(wait_cycle!=0)wait_cycle <= wait_cycle - 1;
+        if(wait_cycle!=0)task_cycle <= task_cycle - 1;
         if (requ_handshake) begin
             wait_cycle<= MAX_WAIT_CYCLE&{5{~requ_type}};
             task_cycle<= MAX_TASK_CYCLE;
@@ -105,7 +102,6 @@ always @(posedge clk) begin
             reg_exdat <= requ_exdat;
             reg_entype<= requ_type;
         end
-        // 读访问的最后一个周期采样RAM数据
     end
 end
 

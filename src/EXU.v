@@ -10,10 +10,10 @@ module EXU(
 	input  [10:0] IDU_EXU_func,//这里描述得到的结果是什么含义，0-0-0-0-0-0-0-0-st-ld-wb(就是是不是R型指令)
     input  [31:0] IDU_EXU_wdata,
     input  [ 3:0] IDU_EXU_wstrb,//高有效
-	output [31:0] EXU_IDU_ready,
+	output        EXU_IDU_ready,
 
     output        EXU_MEM_valid,
-    output        EXU_MEM_addr,
+    output [31:0] EXU_MEM_addr,
     output [31:0] EXU_MEM_wdata,
     output [ 3:0] EXU_MEM_wstrb,//高有效
     output [ 4:0] EXU_MEM_rd,

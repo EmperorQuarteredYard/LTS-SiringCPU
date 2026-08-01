@@ -4,7 +4,7 @@ module IDU
     input         rst,           //低电平复位信号
 
 	input         IFU_IDU_valid, //IFU有效信号
-	input  [31:0] IFU_IDU_PC,    //IFU PC输入
+	input  [31:0] IFU_IDU_pc,    //IFU PC输入
 	input  [31:0] IFU_IDU_inst,  //IFU指令输入
 	input  [ 1:0] IFU_IDU_id,    //IFU ID输入
 	output        IDU_IFU_ready, //IDU IFU准备好信号
@@ -303,7 +303,7 @@ always @(posedge clk) begin
 	else begin
         // 如果当前可以接收新指令（空闲）且 IFU 提供有效数据，则锁存
         if (IFU_IDU_handshake) begin
-            reg_PC    <= IFU_IDU_PC;
+            reg_PC    <= IFU_IDU_pc;
             reg_PCid    <= IFU_IDU_id;
             reg_inst  <= IFU_IDU_inst;
         end
