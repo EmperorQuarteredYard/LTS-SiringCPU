@@ -48,6 +48,8 @@ ICU ICU
 	.RAM_IFU_valid(RAM_IFU_valid),
 	.RAM_IFU_rdata(RAM_IFU_rdata),
 	.IFU_RAM_ready(IFU_RAM_ready),
+    // .o_cac_hit(),
+    // .state(),
 
 	.PC   (PC),
 	.inst (inst),

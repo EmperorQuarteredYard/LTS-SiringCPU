@@ -1,16 +1,10 @@
-###############################################################################
-# 时钟定义
-###############################################################################
-# 主时钟100MHz (10ns周期)，从外部晶振输入
-create_clock -period 10.000 -name clk -waveform {0.000 5.000} [get_ports clk]
+
+# 主时钟周期
+create_clock -period 20.000 -name clk -waveform {0.000 5.000} [get_ports clk]
 set cpu_clk [get_clocks clk]
 
-# 若时钟引脚非专用时钟输入，可取消注释以下行
-# set_property CLOCK_DEDICATED_ROUTE BACKBONE [get_nets clk]
 
-###############################################################################
-# 引脚分配 (PACKAGE_PIN)
-###############################################################################
+# 引脚分配 (PACKAGE_PIN
 # ----------------------- 系统时钟与复位 -----------------------
 set_property PACKAGE_PIN K21 [get_ports clk]   
 set_property PACKAGE_PIN T2  [get_ports rstn]  # btn0 (低有效复位)
@@ -145,16 +139,12 @@ set_property PACKAGE_PIN R25  [get_ports {EXTRAM_be_n[1]}]
 set_property PACKAGE_PIN AD24 [get_ports {EXTRAM_be_n[2]}]
 set_property PACKAGE_PIN AB22 [get_ports {EXTRAM_be_n[3]}]
 
-###############################################################################
 # I/O 电平标准 (所有信号均为3.3V LVCMOS)
-###############################################################################
 set_property IOSTANDARD LVCMOS33 [get_ports clk]
 set_property IOSTANDARD LVCMOS33 [get_ports rstn]
 set_property IOSTANDARD LVCMOS33 [get_ports -filter {DIRECTION == "OUT" || DIRECTION == "INOUT"}]
 
-###############################################################################
-# 输入/输出延迟约束 (基于10ns SRAM时序，数值需根据实际PCB调整)
-###############################################################################
+# 输入/输出延迟约束
 # SRAM读数据输入延迟：时钟到FPGA引脚的数据有效时间
 # 典型值 tAA(max)=10ns + PCB走线 + FPGA Tco，此处设17ns作为示例
 set ram_input_delay 17
@@ -173,10 +163,3 @@ set_output_delay -clock $cpu_clk $ram_output_delay [get_ports {EXTRAM_a[*] EXTRA
 # 双向数据线作为输出时的延迟
 set_output_delay -clock $cpu_clk $ram_output_delay [get_ports {BASERAM_dq[*]}]
 set_output_delay -clock $cpu_clk $ram_output_delay [get_ports {EXTRAM_dq[*]}]
-
-###############################################################################
-# 建议：根据实际板级验证调整以下参数
-# - ram_input_delay / ram_output_delay：取决于PCB走线、SRAM器件速度等级
-# - 若时钟引脚非专用，请取消注释 CLOCK_DEDICATED_ROUTE 设置
-# - 对于inout端口，输出延迟作用于写操作，输入延迟作用于读操作
-###############################################################################
