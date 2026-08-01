@@ -1,9 +1,9 @@
 module RAM#(
-    parameter MAX_WAIT_CYCLE = 3;//1-31
-    parameter MAX_TASK_CYCLE = 15;
+    parameter MAX_WAIT_CYCLE = 3,//1-31
+    parameter MAX_TASK_CYCLE = 15
 )(
-    .clk(clk),
-    .rst(rst),
+    input clk,
+    input rst,
 
     //外部 SRAM 物理接口
     inout  [31:0] RAM_data,      // 双向数据总线：读时由SRAM驱动，写时由本模块驱动
@@ -73,7 +73,7 @@ assign RAM_oe_n    = wire_we_n;
 assign RAM_we_n    = wire_re_n;
 assign RAM_ce_n    = wire_valid;
 assign resp_rdata  = resp_valid? 32'bz:(RAM_data&{{8{wire_wstrb[3]}},{8{wire_wstrb[2]}},{8{wire_wstrb[1]}},{8{wire_wstrb[0]}}});
-assign resp_valid = wait_cycle == 0 & (requ_addr == wire_addr)|(task_cycle == 0);
+assign resp_valid = wait_cycle == 0 & (requ_addr == wire_addr);
 assign resp_exdat = wire_exdat;
 assign requ_ready = ((wait_cycle == 0)&resp_handshake)|~wire_valid|(task_cycle == 0);
 
