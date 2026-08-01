@@ -1,3 +1,4 @@
+`include "define.vh"
 module TOP(
     input clk,
     input rstn,
@@ -8,6 +9,10 @@ module TOP(
     output        BASERAM_we_n,
     output        BASERAM_ce_n,
     output [3:0]  BASERAM_be_n,
+    `ifdef ENVIRONMENT_SIMULATE
+    output [31:0] o32_simulate,
+    output        o01_simulate,
+    `endif
 
     // EXT SRAM
     output [19:0] EXTRAM_a,
@@ -17,10 +22,10 @@ module TOP(
     output        EXTRAM_ce_n,
     output [3:0]  EXTRAM_be_n
 
+
 );
 wire rst;
-assign rstn = ~ rst;
-
+assign rst = ~rstn;
 
 wire IFU_IDU_valid;
 wire IFU_IDU_PC;
@@ -212,5 +217,9 @@ ISU ISU(
 //     .dina (ram_wdata ),
 //     .douta(ram_rdata ) 
 // );
+`ifdef ENVIRONMENT_SIMULATE
+assign o32_simulate = 32'h12345678;
+assign o01_simulate = 1'b1;
+`endif
 
 endmodule

@@ -4,6 +4,9 @@ module MEM#(
     input clk,
     input rst,
 
+    output        o_EXU_MEM_handshake,
+    output        o_MEM_ISU_handshake,
+
     input         EXU_MEM_valid,
     input         EXU_MEM_wen,
     input         EXU_MEM_ren,
@@ -109,7 +112,7 @@ wire MEM_ISU_handshake;
 assign EXU_MEM_handshake = EXU_MEM_valid & MEM_EXU_ready;
 assign MEM_ISU_handshake = MEM_ISU_valid & ISU_MEM_ready;
 assign MEM_ISU_valid     = wire_valid&data_resp_valid;
-assign MEM_EXU_ready     = ((~wire_valid)|MEM_ISU_handshake) & data_requ_ready;
+assign MEM_EXU_ready     = ((~wire_valid)|MEM_ISU_handshake|~wire_ren) & data_requ_ready;
 assign data_requ_valid   = wire_valid;
 assign data_requ_addr    = wire_addr[21:2];
 assign data_requ_type    = wire_wen;
@@ -119,6 +122,9 @@ assign data_requ_exdat   = 1'b1;
 assign data_resp_ready   = 1'b1;
 assign MEM_ISU_rd        = wire_rd;
 assign MEM_ISU_data      = data_resp_rdata;
+
+assign o_EXU_MEM_handshake = EXU_MEM_handshake;
+assign o_MEM_ISU_handshake = MEM_ISU_handshake;
 
 `endif
 
