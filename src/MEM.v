@@ -10,6 +10,7 @@ module MEM#(
     input  [31:0] EXU_MEM_wdata,
     input  [31:0] EXU_MEM_addr,
     input  [ 4:0] EXU_MEM_rd,
+    input  [ 3:0] EXU_MEM_wstrb,//高有效
     output        MEM_EXU_ready,
     
     output        MEM_ISU_valid,
@@ -110,7 +111,7 @@ assign MEM_ISU_handshake = MEM_ISU_valid & ISU_MEM_ready;
 assign MEM_ISU_valid     = wire_valid&data_resp_valid;
 assign MEM_EXU_ready     = ((~wire_valid)|MEM_ISU_handshake) & data_requ_ready;
 assign data_requ_valid   = wire_valid;
-assign data_requ_addr    = wire_addr[19:0];
+assign data_requ_addr    = wire_addr[21:2];
 assign data_requ_type    = wire_wen;
 assign data_requ_wdata   = wire_wdata;
 assign data_requ_wstrb   = 4'b0;
@@ -135,7 +136,7 @@ wire [31:0] inst_resp_rdata;
 wire        inst_resp_ready;
 
 assign inst_requ_valid = IFU_MEM_valid & IFU_MEM_en;
-assign inst_requ_addr  = IFU_RAM_raddr[19:0];
+assign inst_requ_addr  = IFU_RAM_raddr[21:2];
 assign inst_requ_type  = 1'b0;
 assign inst_requ_wdata = 32'b0;
 assign inst_requ_wstrb = 4'b0;

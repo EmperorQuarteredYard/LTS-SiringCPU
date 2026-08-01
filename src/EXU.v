@@ -9,11 +9,13 @@ module EXU(
 	input  [ 4:0] IDU_EXU_rd,
 	input  [10:0] IDU_EXU_func,//这里描述得到的结果是什么含义，0-0-0-0-0-0-0-0-st-ld-wb(就是是不是R型指令)
     input  [31:0] IDU_EXU_wdata,
+    input  [ 3:0] IDU_EXU_wstrb,//高有效
 	output [31:0] EXU_IDU_ready,
 
     output        EXU_MEM_valid,
     output        EXU_MEM_addr,
     output [31:0] EXU_MEM_wdata,
+    output [ 3:0] EXU_MEM_wstrb,//高有效
     output [ 4:0] EXU_MEM_rd,
     output        MEM_ld_en,
     output        MEM_st_en,
@@ -32,6 +34,7 @@ reg [ 3:0] reg_ope;
 reg [ 4:0] reg_rd;
 reg [10:0] reg_func;
 reg        reg_valid;
+reg [ 3:0] reg_wstrb;
 
 
 wire [31:0] wire_rs1;
@@ -45,6 +48,7 @@ wire        wire_valid;
 wire        wire_st_en;
 wire        wire_ld_en;
 wire        wire_wb_en;
+wire        wire_wstrb;
 
 assign wire_rs1   = reg_rs1;
 assign wire_rs2   = reg_rs2;
@@ -52,6 +56,7 @@ assign wire_wdata = reg_wdata;
 assign wire_ope   = reg_ope;
 assign wire_rd    = reg_rd;
 assign wire_func  = reg_func;
+assign wire_wstrb = reg_wstrb;
 
 assign wire_st_en  = wire_func[2];
 assign wire_ld_en  = wire_func[1];
@@ -76,6 +81,7 @@ assign EXU_IDU_ready = (~wire_valid) | (EXU_ISU_handshake);
 assign EXU_ISU_rd    = wire_rd;
 assign EXU_ISU_res   = wire_res;
 assign EXU_MEM_wdata = wire_wdata;
+assign EXU_MEM_wstrb = wire_wstrb;
 assign EXU_MEM_addr  = wire_res;
 assign MEM_ld_en     = wire_ld_en;
 assign MEM_st_en     = wire_st_en;
@@ -95,6 +101,7 @@ always @(posedge clk) begin
         reg_rd    <= 5'b0;
         reg_func  <= 11'b0;
         reg_valid <= 1'b0;
+        reg_wstrb <= 4'hf;
     end
     else if(IDU_EXU_handshake)begin
         reg_rs1   <= IDU_EXU_rs1;
@@ -102,6 +109,7 @@ always @(posedge clk) begin
         reg_ope   <= IDU_EXU_ope;
         reg_rd    <= IDU_EXU_rd;
         reg_func  <= IDU_EXU_func;
+        reg_wstrb <= IDU_EXU_wstrb;
     end
     reg_valid <= IDU_EXU_handshake;
 end

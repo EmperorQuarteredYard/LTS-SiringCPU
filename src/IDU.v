@@ -27,6 +27,7 @@ module IDU
 	output [ 3:0] IDU_EXU_ope,
 	output [ 4:0] IDU_EXU_rd,//当不写回寄存器时，rd为0，LoongArch特性
 	output [10:0] IDU_EXU_func,//这里描述得到的结果是什么含义，0-0-0-0-0-0-0-0-st-ld-wb(就是是不是R型指令)
+    output [ 3:0] IDU_EXU_wstrb,
     output [31:0] IDU_EXU_wdata,
 	input         EXU_IDU_ready
 );
@@ -278,6 +279,10 @@ assign IDU_EXU_ope =`alu_opadd & {4{inst_lu12i_w|inst_pcaddu12i|inst_addi_w|inst
                     // `alu_oprc   & {4{0}};
 assign IDU_EXU_func = {1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,inst_st_x,inst_ld_x,rd_wb_en|inst_bl};
 assign IDU_EXU_rd   = rd & {5{rd_wb_en}} | {4'b0,inst_bl};
+assign IDU_EXU_wstrb = op_25_22[1:0] == 2'b00?4'b0001:
+                       op_25_22[1:0] == 2'b01?4'b0011:
+                    //    op_25_22[1:0] == 2'b10?4'b1111:
+                       4'b1111;
 `endif
 
 `define JUM_ANALYSE//跳转指令处理
