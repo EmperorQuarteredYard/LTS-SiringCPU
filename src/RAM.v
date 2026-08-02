@@ -47,6 +47,7 @@ wire        wire_exdat;
 wire [ 1:0] nxt_stage ;
 wire        wire_we_n;//注意！这里已经是取反了的
 wire        wire_re_n;
+wire        wire_valid;
 
 assign wire_cntrs  = reg_cntrs ;
 assign wire_addr   = reg_addr  ;
@@ -102,6 +103,7 @@ always @(posedge clk) begin
             reg_exdat <= requ_exdat;
             reg_entype<= requ_type;
         end
+        // 读访问的最后一个周期采样RAM数据
     end
 end
 

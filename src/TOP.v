@@ -11,6 +11,7 @@ module TOP(
     output [3:0]  BASERAM_be_n,
     `ifdef ENVIRONMENT_SIMULATE
     output [31:0] o32_simulate,
+    output [16:0] o16_simulate,
     output        o01_simulate,
     `endif
 
@@ -31,7 +32,6 @@ wire        IFU_IDU_valid;
 wire [31:0] IFU_IDU_pc;
 wire [31:0] IFU_IDU_inst;
 wire [ 1:0] IFU_IDU_id;
-wire        IDU_IFU_ready;
 wire        ISU_IFU_PCmis;
 wire [31:0] ISU_IFU_PCnew;
 wire        IFU_RAM_valid;
@@ -41,7 +41,7 @@ wire        RAM_IFU_valid;
 wire [31:0] RAM_IFU_rdata;
 wire        IFU_RAM_ready;
 
-wire        IDU_ISU_valid; //IDU ISU有效信号
+wire        IDU_IFU_ready; //IDU ISU有效信号
 wire [31:0] IDU_ISU_PCnew;
 wire        IDU_ISU_PCmis;
 wire        IDU_EXU_valid;
@@ -67,7 +67,6 @@ wire        MEM_ld_en;
 wire        ISU_wb_en;
 wire        ISU_EXU_ready;
 
-
 wire        EXU_IDU_ready;
 
 wire [31:0] EXU_MEM_addr;
@@ -75,6 +74,11 @@ wire        EXU_MEM_valid;
 wire        MEM_EXU_ready;
 wire [ 4:0] EXU_MEM_rd;
 wire [31:0] EXU_MEM_wdata;
+
+wire        MEM_ISU_valid;
+wire [31:0] MEM_ISU_data;
+wire [ 4:0] MEM_ISU_rd;
+wire        ISU_MEM_ready;
 
 MEM MEM(
     .clk(clk),
@@ -113,7 +117,7 @@ IFU IFU(
     .clk(clk),
     .rst(rst),
     // .o32_simulate(o32_simulate),
-    .o01_simulate(o01_simulate),
+    // .o01_simulate(o01_simulate),
     .IFU_IDU_valid(IFU_IDU_valid),
     .IFU_IDU_pc(IFU_IDU_pc),
     .IFU_IDU_inst(IFU_IDU_inst),
@@ -223,8 +227,14 @@ ISU ISU(
 //     .douta(ram_rdata ) 
 // );
 `ifdef ENVIRONMENT_SIMULATE
-assign o32_simulate = IFU_IDU_pc;
-// assign o01_simulate = rst;
+assign o32_simulate = IFU_IDU_inst;
+// assign o01_simulate = IFU_IDU_valid & IDU_IFU_ready;
+assign o16_simulate = {2'b00,IFU_IDU_valid,IDU_IFU_ready,
+2'b00,IDU_EXU_valid,IDU_IFU_ready,
+2'b00,EXU_MEM_valid,MEM_EXU_ready,
+2'b00,MEM_ISU_valid,ISU_MEM_ready
+};
+
 `endif
 
 endmodule

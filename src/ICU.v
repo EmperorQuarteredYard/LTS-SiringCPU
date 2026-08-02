@@ -12,7 +12,7 @@ module ICU(
 
     input  [31:0] PC,
     output [31:0] inst,
-	// output        o_cac_hit,
+	output        o_cac_hit,
 	// output [ 1:0] state,
     output        valid
 );
@@ -31,7 +31,7 @@ assign valid   =  cac_hit && !rst && (reg_state == 2'b00);
 
 assign IFU_RAM_valid = (reg_state == 2'b01) & !rst;
 assign IFU_RAM_raddr = PC;
-assign IFU_RAM_ready = (reg_state == 2'b10) & !rst;
+assign IFU_RAM_ready = 1'b1/*(reg_state == 2'b10) & !rst*/;
 // assign o_cac_hit = cac_hit;
 // assign state = reg_state;
 
