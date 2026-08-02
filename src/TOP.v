@@ -227,9 +227,9 @@ ISU ISU(
 //     .douta(ram_rdata ) 
 // );
 `ifdef ENVIRONMENT_SIMULATE
-assign o32_simulate = IFU_IDU_inst;
+assign o32_simulate = IFU_RAM_raddr;
 // assign o01_simulate = IFU_IDU_valid & IDU_IFU_ready;
-assign o16_simulate = {2'b00,IFU_IDU_valid,IDU_IFU_ready,
+assign o16_simulate = {IFU_RAM_valid,RAM_IFU_valid,IFU_IDU_valid,IDU_IFU_ready,
 2'b00,IDU_EXU_valid,IDU_IFU_ready,
 2'b00,EXU_MEM_valid,MEM_EXU_ready,
 2'b00,MEM_ISU_valid,ISU_MEM_ready

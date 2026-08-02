@@ -33,16 +33,18 @@ wire [31:0] wire_inst;
 wire        wire_valid;
 wire [31:0] wire_pc;
 wire [31:0] wire_nxt_pc;
+wire        wire_nxt_valid;
 
 
 assign wire_pc    = reg_pc;
-assign wire_inst  = wire_inst;
+assign wire_inst  = reg_inst;
 assign wire_valid = reg_valid;
+assign wire_nxt_valid = reg_nxt_valid;
 
 assign IFU_IDU_pc = wire_pc;
 assign IFU_IDU_inst = wire_inst;
 assign IFU_RAM_raddr = wire_nxt_pc;
-assign IFU_RAM_valid = 1'b1;
+assign IFU_RAM_valid = ~wire_nxt_valid;
 assign IFU_RAM_ready = 1'b1;
 assign IFU_IDU_id = wire_pc[6:5];
 
@@ -61,13 +63,13 @@ assign wire_nxt_pc = wire_pc + (op_31_26[5:1] == 5'b01010  ? {{ 4{offs2[ 9]}},of
 
 
 wire IFU_IDU_handshake;
-assign IFU_IDU_valid = wire_valid && !rst;
+assign IFU_IDU_valid = wire_valid;
 assign IFU_IDU_handshake = IFU_IDU_valid && IDU_IFU_ready;
-always @(posedge) begin
+always @(posedge clk) begin
     reg_valid <= 1'b0;
     if(rst)begin
         reg_pc <= `RST_PC;
-        reg_inst <= 32'bz;
+        reg_inst <= 32'b0;
         reg_valid <= 1'b0;//这边缘怎么还平行了
         reg_nxt_valid <= 1'b0;
     end
@@ -77,9 +79,10 @@ always @(posedge) begin
         reg_nxt_valid <= 1'b0;
     end 
     else begin
-        if(IFU_IDU_handshake)begin
+        if(IFU_IDU_handshake|~wire_valid)begin
             reg_pc <= wire_nxt_pc;
             reg_inst <= reg_nxt_inst;
+            reg_valid <= 1'b1;
             reg_nxt_valid <= 1'b0;
         end
         if(RAM_IFU_valid)begin
