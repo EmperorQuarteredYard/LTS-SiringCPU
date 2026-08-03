@@ -51,25 +51,23 @@ assign w_inst = r_inst;
 assign w_PC = r_PC;
 
 //I/O通道
-`define ID_PIPE
-`ifdef ID_PIPE
-reg [19:0] r_EXTRAM_waddr;
-reg [31:0] r_EXTRAM_wdata;
-reg        r_EXTRAM_oe_n;
-reg        r_EXTRAM_we_n;
-reg [3:0]  r_EXTRAM_be_n;
-reg        r_EXTRAM_ce_n;
+`define IO_PIPE
+`ifdef IO_PIPE
+reg [19:0] r_t_EXTRAM_addr;
+reg [31:0] r_t_EXTRAM_data;
+reg        r_t_EXTRAM_oe_n;
+reg        r_t_EXTRAM_we_n;
+reg [ 3:0] r_t_EXTRAM_be_n;
+reg        r_t_EXTRAM_ce_n;
+reg [ 4:0] r_t_GPR_rd;
 
-wire [19:0] w_EXTRAM_waddr;
-wire [31:0] w_EXTRAM_wdata;
-wire        w_EXTRAM_oe_n;
-wire        w_EXTRAM_we_n;
-wire        w_EXTRAM_ce_n;
-wire [3:0]  w_EXTRAM_be_n;
-wire [19:0] w_EXTRAM_raddr;
-wire        w_EXTRAM_wr_sel;//约定0w1r
-wire [31:0] w_EXTRAM_rdata;
-
+wire [31:0] w_t_EXTRAM_faddr;
+wire [19:0] w_t_EXTRAM_addr;
+wire [31:0] w_t_EXTRAM_data;
+wire        w_t_EXTRAM_oe_n;
+wire        w_t_EXTRAM_we_n;
+wire        w_t_EXTRAM_ce_n;
+wire [ 3:0] w_t_EXTRAM_be_n;
 
 assign BASERAM_be_n = 4'b0;
 assign BASERAM_oe_n = 1'b0;
@@ -77,6 +75,14 @@ assign BASERAM_we_n = 1'b1;
 assign BASERAM_ce_n = 1'b0;
 assign BASERAM_a    = w_nxt_PC[21:2];
 assign w_nxt_inst   = BASERAM_dq;
+
+assign EXTRAM_a    = r_t_EXTRAM_addr;
+assign EXTRAM_dq   = r_t_EXTRAM_we_n?32'bz:r_t_EXTRAM_data;
+assign EXTRAM_oe_n = r_t_EXTRAM_oe_n;
+assign EXTRAM_we_n = r_t_EXTRAM_we_n;
+assign EXTRAM_ce_n = r_t_EXTRAM_ce_n;
+assign EXTRAM_be_n = r_t_EXTRAM_be_n;
+// assign GPR[r_t_GPR_rd] = (r_t_EXTRAM_ce_n|r_t_EXTRAM_oe_n)?GPR[r_t_GPR_rd]:((r_t_GPR_rd == 5'b0)?32'b0:EXTRAM_dq);//这里应当放到时序块中，并且加上数据前递
 `endif
 
 `define INST_DECODE
@@ -188,7 +194,7 @@ assign offs16 = w_inst[25:10];
 assign offs26 = {w_inst[9:0],w_inst[25:0]};
 //立即数拼合
 assign imm_si20_12 = inst_lu12i_w | inst_pcaddu12i;
-assign imm_si12 = inst_addi_w | inst_ld_b | inst_ld_w | inst_st_b | inst_st_w | inst_cacop;//这里b,bl等等实际上应当触发流水线冲刷，并且将PC更新
+assign imm_si12 = inst_addi_w | inst_ld_b | inst_ld_w | inst_st_b | inst_st_w | inst_cacop;
 assign imm_ui12 = inst_andi | inst_ori;
 assign imm_offs16   = inst_beq | inst_bne | inst_jirl;
 assign imm_offs26   = inst_b | inst_bl;
@@ -204,9 +210,9 @@ assign offs = {{ 4{offs26[25]}},offs26,2'b00} & {32{imm_offs26}}|
 assign imm_en = imm_csr14|imm_si12|imm_ui12|imm_4;
 assign offs_en = offs16|offs26;
 //读取被操作数
-assign w_rd = (rd==5'b0)?32'b0:GPR[rd];
-assign w_rk = (rk==5'b0)?32'b0:GPR[rk];
-assign w_rj = (rj==5'b0)?32'b0:GPR[rj];
+assign w_rd = (rd==5'b0)?32'b0:(rd==r_t_GPR_rd&(~r_t_EXTRAM_ce_n)&(~r_t_EXTRAM_oe_n))?EXTRAM_dq:GPR[rd];
+assign w_rk = (rk==5'b0)?32'b0:(rk==r_t_GPR_rd&(~r_t_EXTRAM_ce_n)&(~r_t_EXTRAM_oe_n))?EXTRAM_dq:GPR[rk];
+assign w_rj = (rj==5'b0)?32'b0:(rj==r_t_GPR_rd&(~r_t_EXTRAM_ce_n)&(~r_t_EXTRAM_oe_n))?EXTRAM_dq:GPR[rj];//运用了一点流水线CPU的数据前递的思想
 `endif
 
 `define INST_EXECUTE
@@ -237,26 +243,19 @@ assign w_rd_wdata = inst_lu12i_w   ? imm        :
 assign     w_rd_wen        = inst_lu12i_w|inst_pcaddu12i|inst_addi_w|inst_add_w|inst_sub_w|inst_slt|inst_and|inst_andi|inst_or|inst_ori|inst_xor|inst_sll_w|inst_slli_w|inst_srli_w|inst_mul_w|inst_bl;
 assign     w_rd_addr       = inst_bl?5'h01:rd;//注意！这里也包括ld写入的数据
 //EXTRAM
-wire [31:0] w_EXTRAM_addr;
-assign     w_EXTRAM_ce_n   = ~(inst_ld_o_st);
-assign     w_EXTRAM_wr_sel = inst_ld_x;
-assign     w_EXTRAM_wdata  = w_rd;
-assign     w_EXTRAM_waddr  = w_EXTRAM_addr[21:2];
-assign     w_EXTRAM_raddr  = w_EXTRAM_addr[21:2];
-assign     w_EXTRAM_addr   = w_rj + imm;
+assign     w_t_EXTRAM_ce_n  = ~(inst_ld_o_st);
+assign     w_t_EXTRAM_be_n  = (inst_ld_b|inst_st_b)?4'b1100:4'b0000; 
+assign     w_t_EXTRAM_data  = w_rd;
+assign     w_t_EXTRAM_faddr = imm+w_rj;
+assign     w_t_EXTRAM_addr  = w_t_EXTRAM_faddr[21:2];
+assign     w_t_EXTRAM_oe_n  =~inst_ld_x;
+assign     w_t_EXTRAM_we_n  =~inst_st_x;
 
-assign     EXTRAM_a = w_EXTRAM_wr_sel?w_EXTRAM_raddr:w_EXTRAM_waddr;//一个采用reg，一个用wire，原因是一个因为信号毛刺不得不为之，一个要在周期内访问完成
-assign     EXTRAM_dq = w_EXTRAM_wr_sel?32'bz:w_EXTRAM_wdata;
-assign     EXTRAM_ce_n = w_EXTRAM_ce_n;
-assign     EXTRAM_oe_n =~w_EXTRAM_wr_sel;
-assign     EXTRAM_we_n = w_EXTRAM_wr_sel;
-assign     EXTRAM_be_n = 4'b0;
 
 //判断新PC
 wire beq_jump;
 assign beq_jump = (w_rj == w_rd);
 assign w_nxt_PC = (inst_jirl?w_rj:w_PC) + ((inst_b|inst_bl|inst_jirl|(inst_beq&beq_jump)|(inst_bne&~beq_jump)) ?(offs & {32{offs_en}}) : 32'h4);
-// assign w_nxt_PC = w_PC;我在写什么？
 `endif
 
 `ifdef ENVIRONMENT_SIMULATE
@@ -280,11 +279,12 @@ always @(posedge clk) begin
     if(~rstn)begin
         r_PC   <= `RST_PC;
         r_inst <= 32'b0;
-        r_EXTRAM_waddr <= 20'b0;
-        r_EXTRAM_wdata <= 32'b0;
-        r_EXTRAM_we_n  <= 1'b1;
-        r_EXTRAM_be_n  <= 4'hf;
-        r_EXTRAM_ce_n  <= 1'h1;
+        r_t_EXTRAM_addr <= 20'b0;
+        r_t_EXTRAM_data <= 32'b0;
+        r_t_EXTRAM_oe_n <= 1'b1;
+        r_t_EXTRAM_be_n <= 4'hf;
+        r_t_EXTRAM_ce_n <= 1'h1;
+        r_t_EXTRAM_we_n <= 1'b1;
         for (i=0; i<31; i=i+1) begin : gen_rst_gpr
             GPR[i]<=32'b0;
         end
@@ -292,14 +292,17 @@ always @(posedge clk) begin
     else begin
         r_PC   <= w_nxt_PC;
         r_inst <= w_nxt_inst;
-        if(~w_EXTRAM_ce_n)begin
-            if(w_EXTRAM_wr_sel)begin
-                GPR[w_rd_addr]<=EXTRAM_dq;
-            end
-            else begin
-                r_EXTRAM_wdata <= w_EXTRAM_wdata;
-                r_EXTRAM_waddr <= w_EXTRAM_waddr;
-            end
+        if(~(r_t_EXTRAM_ce_n|r_t_EXTRAM_oe_n))begin
+            GPR[r_t_GPR_rd] <= EXTRAM_dq;
+        end
+        if(~w_t_EXTRAM_ce_n)begin
+            r_t_EXTRAM_addr <= w_t_EXTRAM_addr;
+            r_t_EXTRAM_data <= w_t_EXTRAM_data;
+            r_t_EXTRAM_oe_n <= w_t_EXTRAM_oe_n;
+            r_t_EXTRAM_we_n <= w_t_EXTRAM_we_n;
+            r_t_EXTRAM_ce_n <= w_t_EXTRAM_ce_n;
+            r_t_EXTRAM_be_n <= w_t_EXTRAM_be_n;
+            r_t_GPR_rd      <= w_rd_addr;
         end
         if(w_rd_wen)begin
            GPR[w_rd_addr] <=w_rd_wdata;
