@@ -1,13 +1,13 @@
 
 # 主时钟周期
-create_clock -period 20.000 -name clk -waveform {0.000 5.000} [get_ports clk]
+create_clock -period 40.000 -name clk -waveform {0.000 5.000} [get_ports clk]
 set cpu_clk [get_clocks clk]
 
 
 # 引脚分配 (PACKAGE_PIN
 # ----------------------- 系统时钟与复位 -----------------------
 set_property PACKAGE_PIN K21 [get_ports clk]   
-set_property PACKAGE_PIN T2  [get_ports rstn]  # btn0 (低有效复位)
+set_property PACKAGE_PIN T2  [get_ports rstn]
 
 # ----------------------- BASE SRAM 地址线 -----------------------
 set_property PACKAGE_PIN T19 [get_ports {BASERAM_a[0]}]
