@@ -1,14 +1,14 @@
-#Clock
-# set_property -dict {PACKAGE_PIN K21 IOSTANDARD LVCMOS33} [get_ports clk]
+# Clock
+set_property -dict {PACKAGE_PIN K21 IOSTANDARD LVCMOS33} [get_ports clk]
 
-# create_clock -period 200.000 -name clk -waveform {0.000 10.000} [get_ports clk]
+create_clock -period 200.000 -name clk -waveform {0.000 10.000} [get_ports clk]
 
 #Touch Button
-set_property -dict {PACKAGE_PIN U5 IOSTANDARD LVCMOS33} [get_ports rstn]
+set_property -dict {PACKAGE_PIN U5 IOSTANDARD LVCMOS33} [get_ports rst]
 # 正式布线时一定要删除下面两行
-set_property CLOCK_DEDICATED_ROUTE FALSE
-set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets clk_IBUF]
-set_property -dict {PACKAGE_PIN U1 IOSTANDARD LVCMOS33} [get_ports clk]
+# set_property CLOCK_DEDICATED_ROUTE FALSE
+# set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets clk_IBUF]
+# set_property -dict {PACKAGE_PIN U1 IOSTANDARD LVCMOS33} [get_ports clk]
 
 #required if touch button used as manual clock source
 # set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets rstn_IBUF]
@@ -158,5 +158,3 @@ set_property -dict {PACKAGE_PIN AD19 IOSTANDARD LVCMOS33} [get_ports EXTRAM_we_n
 set_property CFGBVS VCCO [current_design]
 set_property CONFIG_VOLTAGE 3.3 [current_design]
 set_property BITSTREAM.GENERAL.COMPRESS TRUE [current_design]
-
-

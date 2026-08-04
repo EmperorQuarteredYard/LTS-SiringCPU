@@ -1,7 +1,7 @@
 `include "define.vh"
 module TOP(
     input clk,
-    input rstn,
+    input rst,
     // BASE SRAM
     output [19:0] BASERAM_a,
     inout  [31:0] BASERAM_dq,
@@ -277,7 +277,7 @@ assign o01_simulate  = {inst_lu12i_w,inst_pcaddu12i,inst_addi_w,inst_add_w,inst_
 integer i;
 // reg [19:0]test_temp_addr;
 always @(posedge clk) begin
-    if(~rstn)begin
+    if(rst)begin
         r_PC   <= `RST_PC;
         r_inst <= 32'b0;
         r_t_EXTRAM_addr <= 20'b0;
