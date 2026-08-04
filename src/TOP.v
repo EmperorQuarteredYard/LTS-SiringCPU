@@ -275,6 +275,7 @@ assign o01_simulate  = {inst_lu12i_w,inst_pcaddu12i,inst_addi_w,inst_add_w,inst_
 `define SEQUENTIAL_LOGIC
 `ifdef SEQUENTIAL_LOGIC
 integer i;
+// reg [19:0]test_temp_addr;
 always @(posedge clk) begin
     if(~rstn)begin
         r_PC   <= `RST_PC;
@@ -288,6 +289,7 @@ always @(posedge clk) begin
         for (i=0; i<31; i=i+1) begin : gen_rst_gpr
             GPR[i]<=32'b0;
         end
+        // test_temp_addr <= 8'h10;
     end
     else begin
         r_PC   <= w_nxt_PC;
@@ -296,6 +298,14 @@ always @(posedge clk) begin
             GPR[r_t_GPR_rd] <= EXTRAM_dq;
         end
         if(~w_t_EXTRAM_ce_n)begin
+            // test_temp_addr <= test_temp_addr+1;
+            // r_t_EXTRAM_addr <= test_temp_addr;
+            // r_t_EXTRAM_data <= w_inst;
+            // r_t_EXTRAM_oe_n <= 1'b1;
+            // r_t_EXTRAM_we_n <= 1'b0;
+            // r_t_EXTRAM_ce_n <= 1'b0;;
+            // r_t_EXTRAM_be_n <= 4'b0;;
+            
             r_t_EXTRAM_addr <= w_t_EXTRAM_addr;
             r_t_EXTRAM_data <= w_t_EXTRAM_data;
             r_t_EXTRAM_oe_n <= w_t_EXTRAM_oe_n;
@@ -303,6 +313,7 @@ always @(posedge clk) begin
             r_t_EXTRAM_ce_n <= w_t_EXTRAM_ce_n;
             r_t_EXTRAM_be_n <= w_t_EXTRAM_be_n;
             r_t_GPR_rd      <= w_rd_addr;
+            // r_t_GPR_rd      <= w_rd_addr;
         end
         if(w_rd_wen)begin
            GPR[w_rd_addr] <=w_rd_wdata;
