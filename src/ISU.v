@@ -74,9 +74,10 @@ wire MEM_ISU_handshake;
 assign IDU_ISU_handshake = IDU_ISU_valid & ISU_IDU_ready;
 assign ISU_EXU_handshake = EXU_ISU_valid & ISU_EXU_ready;
 assign MEM_ISU_handshake = MEM_ISU_valid & ISU_EXU_ready;
+assign ISU_MEM_ready = 1'b1;
 assign ISU_EXU_ready = 1'b1;
 assign ISU_EXU_ready = 1'b1;
-assign ISU_IDU_ready = (GPR_lock[IDU_GPR_rj] & IDU_GPR_rj!=5'b0)|(GPR_lock[IDU_GPR_rk] & IDU_GPR_rk!=5'b0)|(GPR_lock[IDU_GPR_rd] & IDU_GPR_rd!=5'b0) ;//如果访问到被锁存的内容，则返回"没准备好"
+assign ISU_IDU_ready = ~((/*GPR_lock[IDU_GPR_rj] &*/ IDU_GPR_rj!=5'b0)/*|(GPR_lock[IDU_GPR_rk] & IDU_GPR_rk!=5'b0)|(GPR_lock[IDU_GPR_rd] & IDU_GPR_rd!=5'b0)*/) ;//如果访问到被锁存的内容，则返回"没准备好"
 `endif
 integer i;
 always @(posedge clk) begin

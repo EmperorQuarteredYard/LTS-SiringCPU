@@ -49,6 +49,7 @@ wire IDU_EXU_handshake;
 assign IDU_IFU_ready = (IDU_EXU_handshake & ISU_IDU_handshake) | ~reg_valid;
 assign IDU_EXU_valid = reg_valid & ISU_IDU_handshake;//由于GPR的读取是异步的，故本周期内能完成操作，必定取决于能否与ISU握手
 assign ISU_IDU_ready = 1'b1;
+assign IDU_ISU_valid = reg_valid;
 
 assign IFU_IDU_handshake = IFU_IDU_valid & IDU_IFU_ready;
 assign ISU_IDU_handshake = IDU_ISU_valid & ISU_IDU_ready;//其实这里并没有用到握手信号，因为我没有考虑到一些情况，比如数据前递，等用到的时候再加吧
@@ -213,11 +214,11 @@ wire imm_4;
 wire imm_en;
 wire offs_en;
 
-assign si20 = reg_inst[24:5];
-assign si12 = reg_inst[21:10];
-assign ui12 = reg_inst[21:10];
-assign offs16 = reg_inst[25:10];
-assign offs26 = {reg_inst[9:0],reg_inst[25:0]};
+assign si20 = wire_inst[24:5];
+assign si12 = wire_inst[21:10];
+assign ui12 = wire_inst[21:10];
+assign offs16 = wire_inst[25:10];
+assign offs26 = {wire_inst[9:0],wire_inst[25:0]};
 
 assign imm_si20_12 = inst_lu12i_w | inst_pcaddu12i;
 assign imm_si12 = inst_addi_w | inst_ld_b | inst_ld_w | inst_st_b | inst_st_w | inst_cacop;//这里b,bl等等实际上应当触发流水线冲刷，并且将PC更新

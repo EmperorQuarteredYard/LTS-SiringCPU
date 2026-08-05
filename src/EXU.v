@@ -57,6 +57,7 @@ assign wire_ope   = reg_ope;
 assign wire_rd    = reg_rd;
 assign wire_func  = reg_func;
 assign wire_wstrb = reg_wstrb;
+assign wire_valid = reg_valid;
 
 assign wire_st_en  = wire_func[2];
 assign wire_ld_en  = wire_func[1];
@@ -87,12 +88,6 @@ assign MEM_ld_en     = wire_ld_en;
 assign MEM_st_en     = wire_st_en;
 assign ISU_wb_en      = wire_rd != 5'b0 & wire_wb_en;//当不允许写入或写入的寄存器为0时，则向下传不写入
 
-assign EXU_ISU_rd    = wire_rd;
-assign EXU_ISU_res   = wire_res;
-assign EXU_ISU_valid = wire_valid;
-assign EXU_IDU_ready = (~wire_valid) | (EXU_ISU_handshake);
-assign MEM_ld_en     = wire_ld_en;
-
 always @(posedge clk) begin
     if(rst)begin
         reg_rs1   <= 32'b0;
@@ -102,16 +97,19 @@ always @(posedge clk) begin
         reg_func  <= 11'b0;
         reg_valid <= 1'b0;
         reg_wstrb <= 4'hf;
+        reg_wdata <= 32'b0;
     end
-    else if(IDU_EXU_handshake)begin
-        reg_rs1   <= IDU_EXU_rs1;
-        reg_rs2   <= IDU_EXU_rs2;
-        reg_ope   <= IDU_EXU_ope;
-        reg_rd    <= IDU_EXU_rd;
-        reg_func  <= IDU_EXU_func;
-        reg_wstrb <= IDU_EXU_wstrb;
+    else begin
+        if(IDU_EXU_handshake)begin
+            reg_rs1   <= IDU_EXU_rs1;
+            reg_rs2   <= IDU_EXU_rs2;
+            reg_ope   <= IDU_EXU_ope;
+            reg_rd    <= IDU_EXU_rd;
+            reg_func  <= IDU_EXU_func;
+            reg_wstrb <= IDU_EXU_wstrb;
+        end
+        reg_valid <= IDU_EXU_handshake;
     end
-    reg_valid <= IDU_EXU_handshake;
 end
 
 endmodule

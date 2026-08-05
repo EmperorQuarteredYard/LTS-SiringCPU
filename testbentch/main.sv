@@ -22,13 +22,13 @@ module TOP_tb;
     wire [31:0] o32_simulate0;
     wire [31:0] o32_simulate1;
     wire [31:0] o32_simulate2;
-    // wire [31:0] o32_simulate3;
-    // wire [31:0] o32_simulate4;
-    // wire [31:0] o32_simulate5;
-    // wire [31:0] o32_simulate6;
-    // wire [31:0] o32_simulate7;
-    // wire [31:0] o32_simulate8;
-    // wire [31:0] o32_simulate9;
+    wire [31:0] o32_simulate3;
+    wire [31:0] o32_simulate4;
+    wire [31:0] o32_simulate5;
+    wire [31:0] o32_simulate6;
+    wire [31:0] o32_simulate7;
+    wire [31:0] o32_simulate8;
+    wire [31:0] o32_simulate9;
     // wire [31:0] o01_simulate;
     wire [15:0] ShakeStatus;
 
@@ -38,13 +38,13 @@ module TOP_tb;
         .o32_simulate0(o32_simulate0),
         .o32_simulate1(o32_simulate1),
         .o32_simulate2(o32_simulate2),
-        // .o32_simulate3(o32_simulate3),
-        // .o32_simulate4(o32_simulate4),
-        // .o32_simulate5(o32_simulate5),
-        // .o32_simulate6(o32_simulate6),
-        // .o32_simulate7(o32_simulate7),
-        // .o32_simulate8(o32_simulate8),
-        // .o32_simulate9(o32_simulate9),
+        .o32_simulate3(o32_simulate3),
+        .o32_simulate4(o32_simulate4),
+        .o32_simulate5(o32_simulate5),
+        .o32_simulate6(o32_simulate6),
+        .o32_simulate7(o32_simulate7),
+        .o32_simulate8(o32_simulate8),
+        .o32_simulate9(o32_simulate9),
         // .o01_simulate(o01_simulate),
         .ShakeStatus(ShakeStatus),
         .BASERAM_a   (BASERAM_a),

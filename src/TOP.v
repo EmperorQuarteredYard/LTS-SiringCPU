@@ -257,26 +257,18 @@ assign o32_simulate5 = EXU_ISU_res;               // 执行结果
 assign o32_simulate6 = EXU_MEM_addr;              // 访存地址
 assign o32_simulate7 = MEM_ISU_data;              // Load 读回数据
 
-// -------------------- 控制/状态打包观测 --------------------
-// o32_simulate8:
-// [31:21] IDU_EXU_func     指令功能类型
-// [20:16] IDU_EXU_rd       译码级目标寄存器
-// [15:11] EXU_ISU_rd       执行级写回目标寄存器
-// [10:6]  MEM_ISU_rd       访存级写回目标寄存器
-// [5]     ISU_IFU_PCmis    分支预测错误/冲刷
-// [4]     MEM_st_en        Store 使能
-// [3]     MEM_ld_en        Load 使能
-// [2]     ISU_wb_en        写回使能
 assign o32_simulate8 = {
-    IDU_EXU_func,
-    IDU_EXU_rd,
-    EXU_ISU_rd,
-    MEM_ISU_rd,
+    3'bz,
+    IDU_GPR_rj,
+    3'bz,
+    IDU_GPR_rk,
+    3'bz,
+    IDU_GPR_rd,
+    4'bz,
     ISU_IFU_PCmis,
     MEM_st_en,
     MEM_ld_en,
-    ISU_wb_en,
-    2'b11
+    ISU_wb_en
 };
 
 `endif
