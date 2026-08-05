@@ -48,7 +48,7 @@ wire        wire_valid;
 wire        wire_st_en;
 wire        wire_ld_en;
 wire        wire_wb_en;
-wire        wire_wstrb;
+wire [ 3:0] wire_wstrb;
 
 assign wire_rs1   = reg_rs1;
 assign wire_rs2   = reg_rs2;
@@ -59,8 +59,9 @@ assign wire_func  = reg_func;
 assign wire_wstrb = reg_wstrb;
 assign wire_valid = reg_valid;
 
-assign wire_st_en  = wire_func[2];
-assign wire_ld_en  = wire_func[1];
+assign wire_st_en = wire_func[2];
+assign wire_ld_en = wire_func[1];
+assign wire_wb_en = wire_func[0];
 // assign wire_alu_en = wire_func[0];
 ALU ALU(
     .op(wire_ope),
@@ -75,18 +76,19 @@ wire EXU_MEM_handshake;
 
 assign IDU_EXU_handshake = IDU_EXU_valid & EXU_IDU_ready;
 assign EXU_ISU_handshake = EXU_ISU_valid & ISU_EXU_ready;
-assign EXU_MEM_valid = MEM_ld_en | MEM_st_en;
 assign EXU_ISU_valid = wire_valid;
-assign EXU_IDU_ready = (~wire_valid) | (EXU_ISU_handshake);
+assign EXU_IDU_ready = (~wire_valid|(EXU_ISU_handshake&wire_wb_en)|(EXU_MEM_handshake&(wire_ld_en|wire_st_en)));
 
 assign EXU_ISU_rd    = wire_rd;
 assign EXU_ISU_res   = wire_res;
+assign EXU_MEM_valid = MEM_ld_en | MEM_st_en;
 assign EXU_MEM_wdata = wire_wdata;
 assign EXU_MEM_wstrb = wire_wstrb;
 assign EXU_MEM_addr  = wire_res;
+assign EXU_MEM_rd    = wire_rd;
 assign MEM_ld_en     = wire_ld_en;
 assign MEM_st_en     = wire_st_en;
-assign ISU_wb_en      = wire_rd != 5'b0 & wire_wb_en;//当不允许写入或写入的寄存器为0时，则向下传不写入
+assign ISU_wb_en     = wire_rd != 5'b0 & wire_wb_en;//当不允许写入或写入的寄存器为0时，则向下传不写入
 
 always @(posedge clk) begin
     if(rst)begin
@@ -108,7 +110,6 @@ always @(posedge clk) begin
             reg_func  <= IDU_EXU_func;
             reg_wstrb <= IDU_EXU_wstrb;
         end
-        reg_valid <= IDU_EXU_handshake;
     end
 end
 

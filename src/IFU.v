@@ -63,10 +63,10 @@ assign wire_nxt_pc = wire_pc + (op_31_26[5:1] == 5'b01010  ? {{ 4{offs2[ 9]}},of
 
 
 wire IFU_IDU_handshake;
-wire RAM_res_handshake;
+wire RAM_resp_handshake;
 assign IFU_IDU_valid = wire_valid;
 assign IFU_IDU_handshake = IFU_IDU_valid & IDU_IFU_ready;
-assign RAM_res_handshake = RAM_IFU_valid & IFU_RAM_ready;
+assign RAM_resp_handshake = RAM_IFU_valid & IFU_RAM_ready;
 always @(posedge clk) begin
     reg_valid <= 1'b0;
     if(rst)begin
@@ -81,7 +81,7 @@ always @(posedge clk) begin
         // reg_nxt_valid <= 1'b0;
     end 
     else begin
-        if((IFU_IDU_handshake|~wire_valid)&RAM_res_handshake)begin
+        if((IFU_IDU_handshake|~wire_valid)&RAM_resp_handshake)begin
             reg_pc <= wire_nxt_pc;
             reg_inst <= RAM_IFU_rdata;
             reg_valid <= 1'b1;

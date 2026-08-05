@@ -87,6 +87,7 @@ wire        MEM_ISU_valid;
 wire [31:0] MEM_ISU_data;
 wire [ 4:0] MEM_ISU_rd;
 wire        ISU_MEM_ready;
+wire [ 3:0] EXU_MEM_wstrb;
 
 MEM MEM(
     .clk(clk),
@@ -98,6 +99,7 @@ MEM MEM(
     .EXU_MEM_wdata(EXU_MEM_wdata),
     .EXU_MEM_addr(EXU_MEM_addr),
     .EXU_MEM_rd(EXU_MEM_rd),
+    .EXU_MEM_wstrb(EXU_MEM_wstrb),
     .MEM_EXU_ready(MEM_EXU_ready),
     .MEM_ISU_valid(MEM_ISU_valid),
     .MEM_ISU_data(MEM_ISU_data),
@@ -145,7 +147,7 @@ IFU IFU(
 IDU IDU(
     .clk(clk),
     .rst(rst),
-
+    .o32_simulate(o32_simulate8),
     .IFU_IDU_valid(IFU_IDU_valid),
     .IFU_IDU_pc(IFU_IDU_pc),
     .IFU_IDU_inst(IFU_IDU_inst),
@@ -190,6 +192,7 @@ EXU EXU(
     .EXU_MEM_rd(EXU_MEM_rd),
     .MEM_st_en(MEM_st_en),
     .MEM_ld_en(MEM_ld_en),
+    .EXU_MEM_wstrb(EXU_MEM_wstrb),
     .MEM_EXU_ready(MEM_EXU_ready),
     
     .EXU_ISU_valid(EXU_ISU_valid),
@@ -248,27 +251,26 @@ assign ShakeStatus = {
 };
 
 // -------------------- 数据通路观测 --------------------
-assign o32_simulate0 = IFU_IDU_pc;                // 取指 PC
-assign o32_simulate1 = IFU_IDU_inst;              // 当前指令编码
-assign o32_simulate2 = RAM_IFU_rdata;           
-assign o32_simulate3 = IDU_EXU_rs1;               // 源操作数 1
-assign o32_simulate4 = IDU_EXU_rs2;               // 源操作数 2
-assign o32_simulate5 = EXU_ISU_res;               // 执行结果
-assign o32_simulate6 = EXU_MEM_addr;              // 访存地址
-assign o32_simulate7 = MEM_ISU_data;              // Load 读回数据
-
-assign o32_simulate8 = {
+assign o32_simulate0 = {32{MEM_st_en}};
+assign o32_simulate1 = {32{MEM_ld_en}};
+assign o32_simulate2 = EXU_MEM_wdata;           
+assign o32_simulate3 = EXU_MEM_addr;
+assign o32_simulate4 = IFU_IDU_pc; 
+assign o32_simulate5 = GPR_IDU_rj;
+assign o32_simulate6 = {32{ISU_IFU_PCmis}}; 
+assign o32_simulate7 = IDU_ISU_PCnew;
+// assign o32_simulate8 = 
+assign o32_simulate9 = {
     3'bz,
     IDU_GPR_rj,
     3'bz,
     IDU_GPR_rk,
     3'bz,
     IDU_GPR_rd,
-    4'bz,
-    ISU_IFU_PCmis,
-    MEM_st_en,
-    MEM_ld_en,
-    ISU_wb_en
+    1'bz,
+    ISU_wb_en,
+    1'bz,
+    EXU_ISU_rd
 };
 
 `endif
