@@ -21,6 +21,7 @@ module TOP(
     output [31:0] o32_simulate8,
     output [31:0] o32_simulate9,
     output [31:0] o01_simulate ,
+    output [15:0] ShakeStatus,
     `endif
 
     // EXT SRAM
@@ -34,292 +35,250 @@ module TOP(
 
 );
 
-wire [31:0] w_nxt_inst;
-wire [31:0] w_nxt_PC;
+wire        IFU_IDU_valid;
+wire [31:0] IFU_IDU_pc;
+wire [31:0] IFU_IDU_inst;
+wire [ 1:0] IFU_IDU_id;
+wire        ISU_IFU_PCmis;
+wire [31:0] ISU_IFU_PCnew;
+wire        IFU_RAM_valid;
+wire [31:0] IFU_RAM_raddr;
+wire        RAM_IFU_ready;
+wire        RAM_IFU_valid;
+wire [31:0] RAM_IFU_rdata;
+wire        IFU_RAM_ready;
 
-reg [31:0] r_PC;
-reg [31:0] r_inst;
-reg [31:0] GPR [31:0];
+wire        IDU_IFU_ready; //IDU ISU有效信号
+wire [31:0] IDU_ISU_PCnew;
+wire        IDU_ISU_PCmis;
+wire        IDU_ISU_valid;
+wire        IDU_EXU_valid;
+wire [31:0] IDU_EXU_rs1;
+wire [31:0] IDU_EXU_rs2;
+wire [ 3:0] IDU_EXU_ope;
+wire [ 4:0] IDU_EXU_rd;
+wire [31:0] IDU_EXU_wdata;
+wire [10:0] IDU_EXU_func;//这里描述得到的结果是什么含义，0-0-0-0-0-0-0-0-st-ld-alu运算
 
-wire [31:0] w_rk;
-wire [31:0] w_rj;
-wire [31:0] w_rd;
-wire [31:0] w_inst;
-wire [31:0] w_PC;
+wire [ 4:0] IDU_GPR_rj;
+wire [ 4:0] IDU_GPR_rk;
+wire [ 4:0] IDU_GPR_rd;
+wire [31:0] GPR_IDU_rj;
+wire [31:0] GPR_IDU_rk;
+wire [31:0] GPR_IDU_rd;//IDU通过ISU访问GPR；GPR的读行为不需要经过一拍
+wire        ISU_IDU_ready;  //ISU IDU准备好信号
+wire        EXU_ISU_valid;
+wire [ 4:0] EXU_ISU_rd;
+wire [31:0] EXU_ISU_res;
+wire        MEM_st_en;
+wire        MEM_ld_en;
+wire        ISU_wb_en;
+wire        ISU_EXU_ready;
 
-assign w_inst = r_inst;
-assign w_PC = r_PC;
+wire        EXU_IDU_ready;
 
-//I/O通道
-`define IO_PIPE
-`ifdef IO_PIPE
-reg [19:0] r_t_EXTRAM_addr;
-reg [31:0] r_t_EXTRAM_data;
-reg        r_t_EXTRAM_oe_n;
-reg        r_t_EXTRAM_we_n;
-reg [ 3:0] r_t_EXTRAM_be_n;
-reg        r_t_EXTRAM_ce_n;
-reg [ 4:0] r_t_GPR_rd;
+wire [31:0] EXU_MEM_addr;
+wire        EXU_MEM_valid;
+wire        MEM_EXU_ready;
+wire [ 4:0] EXU_MEM_rd;
+wire [31:0] EXU_MEM_wdata;
 
-wire [31:0] w_t_EXTRAM_faddr;
-wire [19:0] w_t_EXTRAM_addr;
-wire [31:0] w_t_EXTRAM_data;
-wire        w_t_EXTRAM_oe_n;
-wire        w_t_EXTRAM_we_n;
-wire        w_t_EXTRAM_ce_n;
-wire [ 3:0] w_t_EXTRAM_be_n;
+wire        MEM_ISU_valid;
+wire [31:0] MEM_ISU_data;
+wire [ 4:0] MEM_ISU_rd;
+wire        ISU_MEM_ready;
 
-assign BASERAM_be_n = 4'b0;
-assign BASERAM_oe_n = 1'b0;
-assign BASERAM_we_n = 1'b1;
-assign BASERAM_ce_n = 1'b0;
-assign BASERAM_a    = w_nxt_PC[21:2];
-assign w_nxt_inst   = BASERAM_dq;
+MEM MEM(
+    .clk(clk),
+    .rst(rst),
+    .o32_simulate(o32_simulate2),
+    .EXU_MEM_valid(EXU_MEM_valid),
+    .EXU_MEM_wen(MEM_st_en),
+    .EXU_MEM_ren(MEM_ld_en),
+    .EXU_MEM_wdata(EXU_MEM_wdata),
+    .EXU_MEM_addr(EXU_MEM_addr),
+    .EXU_MEM_rd(EXU_MEM_rd),
+    .MEM_EXU_ready(MEM_EXU_ready),
+    .MEM_ISU_valid(MEM_ISU_valid),
+    .MEM_ISU_data(MEM_ISU_data),
+    .MEM_ISU_rd(MEM_ISU_rd),
+    .ISU_MEM_ready(ISU_MEM_ready),
+    .IFU_MEM_valid(IFU_RAM_valid),
+    .IFU_MEM_en(1'b1),//因为不知道写什么就干脆一直使能了
+    .IFU_RAM_raddr(IFU_RAM_raddr),
+    .RAM_IFU_rdata(RAM_IFU_rdata),
+    .MEM_IFU_ready(RAM_IFU_ready),
+    .MEM_IFU_finish(RAM_IFU_valid),
+    .BASERAM_a(BASERAM_a),
+    .BASERAM_dq(BASERAM_dq),
+    .BASERAM_oe_n(BASERAM_oe_n),
+    .BASERAM_we_n(BASERAM_we_n),
+    .BASERAM_ce_n(BASERAM_ce_n),
+    .BASERAM_be_n(BASERAM_be_n),
+    .EXTRAM_a(EXTRAM_a),
+    .EXTRAM_dq(EXTRAM_dq),
+    .EXTRAM_oe_n(EXTRAM_oe_n),
+    .EXTRAM_we_n(EXTRAM_we_n),
+    .EXTRAM_ce_n(EXTRAM_ce_n),
+    .EXTRAM_be_n(EXTRAM_be_n)
+);
+IFU IFU(
+    .clk(clk),
+    .rst(rst),
+    // .o32_simulate(o32_simulate),
+    // .o01_simulate(o01_simulate),
+    .IFU_IDU_valid(IFU_IDU_valid),
+    .IFU_IDU_pc(IFU_IDU_pc),
+    .IFU_IDU_inst(IFU_IDU_inst),
+    .IFU_IDU_id(IFU_IDU_id),
+    .IDU_IFU_ready(IDU_IFU_ready),
+    .ISU_IFU_PCmis(ISU_IFU_PCmis),
+    .ISU_IFU_PCnew(ISU_IFU_PCnew),
+    .IFU_RAM_valid(IFU_RAM_valid),
+    .IFU_RAM_raddr(IFU_RAM_raddr),
+    .RAM_IFU_ready(RAM_IFU_ready),
+    .RAM_IFU_valid(RAM_IFU_valid),
+    .RAM_IFU_rdata(RAM_IFU_rdata),
+    .IFU_RAM_ready(IFU_RAM_ready)
+);
 
-assign EXTRAM_a    = r_t_EXTRAM_addr;
-assign EXTRAM_dq   = r_t_EXTRAM_we_n?32'bz:r_t_EXTRAM_data;
-assign EXTRAM_oe_n = r_t_EXTRAM_oe_n;
-assign EXTRAM_we_n = r_t_EXTRAM_we_n;
-assign EXTRAM_ce_n = r_t_EXTRAM_ce_n;
-assign EXTRAM_be_n = r_t_EXTRAM_be_n;
-// assign GPR[r_t_GPR_rd] = (r_t_EXTRAM_ce_n|r_t_EXTRAM_oe_n)?GPR[r_t_GPR_rd]:((r_t_GPR_rd == 5'b0)?32'b0:EXTRAM_dq);//这里应当放到时序块中，并且加上数据前递
-`endif
+IDU IDU(
+    .clk(clk),
+    .rst(rst),
 
-`define INST_DECODE
-`ifdef INST_DECODE
-wire [ 5:0] op_31_26;
-wire [ 3:0] op_25_22;
-wire [ 1:0] op_21_20;
-wire [ 4:0] op_19_15;
-wire [ 4:0] rd;
-wire [ 4:0] rj;
-wire [ 4:0] rk;
-wire [11:0] i12;
-wire [19:0] i20;
-wire [15:0] i16;
-wire [25:0] i26;
+    .IFU_IDU_valid(IFU_IDU_valid),
+    .IFU_IDU_pc(IFU_IDU_pc),
+    .IFU_IDU_inst(IFU_IDU_inst),
+    .IFU_IDU_id(IFU_IDU_id),
+    .IDU_IFU_ready(IDU_IFU_ready),
+    .IDU_ISU_valid(IDU_ISU_valid),
+    .IDU_GPR_rj(IDU_GPR_rj),
+    .IDU_GPR_rk(IDU_GPR_rk),
+    .IDU_GPR_rd(IDU_GPR_rd),
+    .GPR_IDU_rj(GPR_IDU_rj),
+    .GPR_IDU_rk(GPR_IDU_rk),
+    .GPR_IDU_rd(GPR_IDU_rd),
+    .IDU_ISU_PCnew(IDU_ISU_PCnew),
+    .IDU_ISU_PCmis(IDU_ISU_PCmis),
+    .ISU_IDU_ready(ISU_IDU_ready),
+    .IDU_EXU_valid(IDU_EXU_valid),
+    .IDU_EXU_rs1(IDU_EXU_rs1),
+    .IDU_EXU_rs2(IDU_EXU_rs2),
+    .IDU_EXU_ope(IDU_EXU_ope),
+    .IDU_EXU_rd(IDU_EXU_rd),
+    .IDU_EXU_func(IDU_EXU_func),
+    .IDU_EXU_wdata(IDU_EXU_wdata),
+    .EXU_IDU_ready(EXU_IDU_ready)
+);
 
-assign {op_31_26,op_25_22,op_21_20,op_19_15,rk,rj,rd} = w_inst;
-//指令定义
-wire        inst_lu12i_w;
-wire        inst_pcaddu12i;
-wire        inst_addi_w;
-wire        inst_add_w;
-wire        inst_sub_w;
-wire        inst_slt;
-wire        inst_and;
-wire        inst_andi;
-wire        inst_or;
-wire        inst_ori;
-wire        inst_xor;
-wire        inst_sll_w;
-wire        inst_slli_w;
-wire        inst_srli_w;
-wire        inst_ld_b;
-wire        inst_ld_w;
-wire        inst_st_b;
-wire        inst_st_w;
-wire        inst_b;
-wire        inst_bl;
-wire        inst_beq;
-wire        inst_bne;
-wire        inst_jirl;
-wire        inst_mul_w;
-wire        inst_cpucfg;
-wire        inst_csrwr;
-wire        inst_csrxchg;
-wire        inst_cacop;
-//指令类定义
-wire        inst_ld_o_st;
-wire        inst_ld_x;
-wire        inst_st_x;
-//指令类解析
-assign inst_ld_o_st      = (op_31_26 == 6'h0a) & ~op_25_22[3];
-assign inst_ld_x         = inst_ld_o_st & ~op_25_22[2];
-assign inst_st_x         = inst_ld_o_st &  op_25_22[2];
-//指令解析
-assign inst_lu12i_w   = (op_31_26 == 6'h05) & ~op_25_22[3];
-assign inst_pcaddu12i = (op_31_26 == 6'h07) & ~op_25_22[3];
-assign inst_addi_w    = (op_31_26 == 6'h00) & (op_25_22 == 4'ha);
-assign inst_add_w     = (op_31_26 == 6'h00) & (op_25_22 == 4'h0) & (op_21_20 == 2'h1);
-assign inst_sub_w     = (op_31_26 == 6'h00) & (op_25_22 == 4'h0) & (op_21_20 == 2'h1) & (op_19_15 == 5'h02);
-assign inst_slt       = (op_31_26 == 6'h00) & (op_25_22 == 4'h0) & (op_21_20 == 2'h1) & (op_19_15 == 5'h04);
-assign inst_and       = (op_31_26 == 6'h00) & (op_25_22 == 4'h0) & (op_21_20 == 2'h1) & (op_19_15 == 5'h09);
-assign inst_andi      = (op_31_26 == 6'h00) & (op_25_22 == 4'hd);
-assign inst_or        = (op_31_26 == 6'h00) & (op_25_22 == 4'h0) & (op_21_20 == 2'h1) & (op_19_15 == 5'h0a);
-assign inst_ori       = (op_31_26 == 6'h00) & (op_25_22 == 4'he);
-assign inst_xor       = (op_31_26 == 6'h00) & (op_25_22 == 4'h0) & (op_21_20 == 2'h1) & (op_19_15 == 5'h0b);
-assign inst_sll_w     = (op_31_26 == 6'h00) & (op_25_22 == 4'h0) & (op_21_20 == 2'h1) & (op_19_15 == 5'h0e);
-assign inst_slli_w    = (op_31_26 == 6'h00) & (op_25_22 == 4'h1) & (op_21_20 == 2'h0) & (op_19_15 == 5'h01);
-assign inst_srli_w    = (op_31_26 == 6'h00) & (op_25_22 == 4'h1) & (op_21_20 == 2'h0) & (op_19_15 == 5'h09);
-assign inst_ld_b      = (op_31_26 == 6'h0a) & (op_25_22 == 4'h0);
-assign inst_ld_w      = (op_31_26 == 6'h0a) & (op_25_22 == 4'h2);
-assign inst_st_b      = (op_31_26 == 6'h0a) & (op_25_22 == 4'h4);
-assign inst_st_w      = (op_31_26 == 6'h0a) & (op_25_22 == 4'h6);
-assign inst_b         = (op_31_26 == 6'h14);
-assign inst_bl        = (op_31_26 == 6'h15);
-assign inst_beq       = (op_31_26 == 6'h16);
-assign inst_bne       = (op_31_26 == 6'h17);
-assign inst_jirl      = (op_31_26 == 6'h13);
-assign inst_mul_w     = (op_31_26 == 6'h00) & (op_25_22 == 4'h0) & (op_21_20 == 2'h1) & (op_19_15 == 5'h18);
-assign inst_cpucfg    = (op_31_26 == 6'h00) & (op_25_22 == 4'h0) & (op_21_20 == 2'h0) & (op_19_15 == 5'h00) & (rk ==  5'b11011);
-assign inst_csrwr     = (op_31_26 == 6'h01) & ~op_25_22[3]     & ~op_25_22[2] & (rj ==  5'b00011);
-assign inst_csrxchg   = (op_31_26 == 6'h01) & ~op_25_22[3]     & ~op_25_22[2] & (rj != 5'b00001) & (rj != 5'b0);
-assign inst_cacop     = (op_31_26 == 6'h01) & (op_25_22 == 4'h8); 
+EXU EXU(
+    .clk(clk),
+    .rst(rst),
 
-//立即数定义
-wire [31:0] imm;
-wire [31:0] offs;
-wire [19:0] si20;
-wire [11:0] si12;
-wire [11:0] ui12;
-wire [15:0] offs16;
-wire [15:0] offs26;
-wire [13:0] csr14;
-wire imm_si20_12;
-wire imm_si12;
-wire imm_ui12;
-wire imm_offs16;
-wire imm_offs26;
-wire imm_csr14;
-wire imm_ui5;
-wire imm_4;
-wire imm_en;
-wire offs_en;
-//立即数提取
-assign si20 = w_inst[24:5];
-assign si12 = w_inst[21:10];
-assign ui12 = w_inst[21:10];
-assign offs16 = w_inst[25:10];
-assign offs26 = {w_inst[9:0],w_inst[25:0]};
-//立即数拼合
-assign imm_si20_12 = inst_lu12i_w | inst_pcaddu12i;
-assign imm_si12 = inst_addi_w | inst_ld_b | inst_ld_w | inst_st_b | inst_st_w | inst_cacop;
-assign imm_ui12 = inst_andi | inst_ori;
-assign imm_offs16   = inst_beq | inst_bne | inst_jirl;
-assign imm_offs26   = inst_b | inst_bl;
-assign imm_ui5  = inst_slli_w|inst_srli_w;
-assign imm_4 = inst_bl;
-assign imm = {si20,12'b0}                    & {32{imm_si20_12}}|
-			 {{20{si12[11]}},si12}           & {32{imm_si12}}|
-			 {20'b0,ui12}                    & {32{imm_ui12}}|
-			 {27'b0,rk}                      & {32{imm_ui5}}|
-			 {32'h4}                         & {32{imm_4}};
-assign offs = {{ 4{offs26[25]}},offs26,2'b00} & {32{imm_offs26}}|
-			  {{14{offs16[15]}},offs16,2'b00} & {32{imm_offs16}};
-assign imm_en = imm_csr14|imm_si12|imm_ui12|imm_4;
-assign offs_en = offs16|offs26;
-//读取被操作数
-assign w_rd = (rd==5'b0)?32'b0:(rd==r_t_GPR_rd&(~r_t_EXTRAM_ce_n)&(~r_t_EXTRAM_oe_n))?EXTRAM_dq:GPR[rd];
-assign w_rk = (rk==5'b0)?32'b0:(rk==r_t_GPR_rd&(~r_t_EXTRAM_ce_n)&(~r_t_EXTRAM_oe_n))?EXTRAM_dq:GPR[rk];
-assign w_rj = (rj==5'b0)?32'b0:(rj==r_t_GPR_rd&(~r_t_EXTRAM_ce_n)&(~r_t_EXTRAM_oe_n))?EXTRAM_dq:GPR[rj];//运用了一点流水线CPU的数据前递的思想
-`endif
+    .IDU_EXU_valid(IDU_EXU_valid),
+    .IDU_EXU_rs1(IDU_EXU_rs1),
+    .IDU_EXU_rs2(IDU_EXU_rs2),
+    .IDU_EXU_ope(IDU_EXU_ope),
+    .IDU_EXU_rd(IDU_EXU_rd),
+    .IDU_EXU_func(IDU_EXU_func),
+    .IDU_EXU_wdata(IDU_EXU_wdata),
+    .EXU_IDU_ready(EXU_IDU_ready),
 
-`define INST_EXECUTE
-`ifdef INST_EXECUTE
-//GPR
-wire [31:0] w_res_addr;
-wire        w_rd_wen;
-wire [ 4:0] w_rd_addr;
-wire [31:0] w_rd_wdata;
-assign w_rd_wdata = inst_lu12i_w   ? imm        :
-                    inst_pcaddu12i ? (w_PC + imm) :
-                    inst_addi_w    ? (imm + w_rj) :
-                    inst_add_w     ? (w_rk + w_rj) :
-                    inst_sub_w     ? (w_rj - w_rk) :
-                    inst_slt       ? {32{w_rj < w_rk}} :
-                    inst_and       ? (w_rj & w_rk) :
-                    inst_andi      ? (w_rj & imm) :
-                    inst_or        ? (w_rj | w_rk) :
-                    inst_ori       ? (w_rj | imm) :
-                    inst_xor       ? (w_rj ^ w_rk) :
-                    inst_sll_w     ? (w_rj << w_rk[4:0]) :
-                    inst_slli_w    ? (w_rj << imm) :
-                    inst_srli_w    ? (w_rj >> imm) :
-                    inst_bl        ? (w_PC + 32'h4) :
-                    inst_jirl      ? (w_PC + 32'h4) :
-                    inst_mul_w     ? (w_rj + w_rk) :
-                    32'b0;
-assign     w_rd_wen        = inst_lu12i_w|inst_pcaddu12i|inst_addi_w|inst_add_w|inst_sub_w|inst_slt|inst_and|inst_andi|inst_or|inst_ori|inst_xor|inst_sll_w|inst_slli_w|inst_srli_w|inst_mul_w|inst_bl;
-assign     w_rd_addr       = inst_bl?5'h01:rd;//注意！这里也包括ld写入的数据
-//EXTRAM
-assign     w_t_EXTRAM_ce_n  = ~(inst_ld_o_st);
-assign     w_t_EXTRAM_be_n  = (inst_ld_b|inst_st_b)?4'b1100:4'b0000; 
-assign     w_t_EXTRAM_data  = w_rd;
-assign     w_t_EXTRAM_faddr = imm+w_rj;
-assign     w_t_EXTRAM_addr  = w_t_EXTRAM_faddr[21:2];
-assign     w_t_EXTRAM_oe_n  =~inst_ld_x;
-assign     w_t_EXTRAM_we_n  =~inst_st_x;
+    .EXU_MEM_valid(EXU_MEM_valid),
+    .EXU_MEM_addr(EXU_MEM_addr),
+    .EXU_MEM_wdata(EXU_MEM_wdata),
+    .EXU_MEM_rd(EXU_MEM_rd),
+    .MEM_st_en(MEM_st_en),
+    .MEM_ld_en(MEM_ld_en),
+    .MEM_EXU_ready(MEM_EXU_ready),
+    
+    .EXU_ISU_valid(EXU_ISU_valid),
+    .EXU_ISU_rd(EXU_ISU_rd),
+    .EXU_ISU_res(EXU_ISU_res),
+    .ISU_wb_en(ISU_wb_en),
+    .ISU_EXU_ready(ISU_EXU_ready)
 
+);
 
-//判断新PC
-wire beq_jump;
-assign beq_jump = (w_rj == w_rd);
-assign w_nxt_PC = (inst_jirl?w_rj:w_PC) + ((inst_b|inst_bl|inst_jirl|(inst_beq&beq_jump)|(inst_bne&~beq_jump)) ?(offs & {32{offs_en}}) : 32'h4);
-`endif
+ISU ISU(
+    .clk(clk),
+    .rst(rst),
 
+	.IDU_ISU_valid(IDU_ISU_valid), //IDU ISU有效信号    
+    .IDU_GPR_rj(IDU_GPR_rj),
+    .IDU_GPR_rk(IDU_GPR_rk),
+    .IDU_GPR_rd(IDU_GPR_rd),
+    .GPR_IDU_rj(GPR_IDU_rj),
+    .GPR_IDU_rk(GPR_IDU_rk),
+    .GPR_IDU_rd(GPR_IDU_rd),//IDU通过ISU访问GPR；GPR的读行为不需要经过一拍
+	.IDU_ISU_PCnew(IDU_ISU_PCnew),
+	.IDU_ISU_PCmis(IDU_ISU_PCmis),
+	.ISU_IDU_ready(ISU_IDU_ready),  //ISU IDU准备好信号
+    .ISU_IFU_PCmis(ISU_IFU_PCmis),
+    .ISU_IFU_PCnew(ISU_IFU_PCnew),
+    .MEM_ISU_valid(MEM_ISU_valid),
+    .MEM_ISU_data(MEM_ISU_data),
+    .MEM_ISU_rd(MEM_ISU_rd),
+    .ISU_MEM_ready(ISU_MEM_ready),
+    .EXU_ISU_valid(EXU_ISU_valid),
+    .EXU_ISU_rd(EXU_ISU_rd),
+    .EXU_ISU_res(EXU_ISU_res),
+    .MEM_ld_en(MEM_ld_en),
+    .ISU_wb_en(ISU_wb_en),
+    .ISU_EXU_ready(ISU_EXU_ready)
+);
+
+// UART_window UART_window (
+//     .clka (clk       ),
+//     .wea  (ram_wen   ),
+//     .addra(ram_addr  ),
+//     .dina (ram_wdata ),
+//     .douta(ram_rdata ) 
+// );
 `ifdef ENVIRONMENT_SIMULATE
-assign o32_simulate0 = {32{inst_ld_o_st}};
-assign o32_simulate1 = {32{w_EXTRAM_wr_sel}};
-assign o32_simulate2 = w_EXTRAM_wdata;
-assign o32_simulate3 = {27'b0,w_rd_addr};
-assign o32_simulate4 = w_rj;
-assign o32_simulate5 = w_rk;
-assign o32_simulate6 = w_rd;
-assign o32_simulate7 = {32{(inst_b|inst_bl|inst_jirl|(inst_beq&beq_jump)|(inst_bne&~beq_jump))}};
-assign o32_simulate8 = imm;
-assign o32_simulate9 = offs;
-assign o01_simulate  = {inst_lu12i_w,inst_pcaddu12i,inst_addi_w,inst_add_w,inst_sub_w,inst_slt,inst_and,inst_andi,inst_or,inst_ori,inst_xor,inst_sll_w,inst_slli_w,inst_srli_w,inst_ld_b,inst_ld_w,inst_st_b,inst_st_w,inst_b,inst_bl,inst_beq,inst_bne,inst_jirl,inst_mul_w,inst_cpucfg,inst_csrwr,inst_csrxchg,inst_cacop,inst_ld_o_st,inst_ld_x,inst_st_x,(inst_b|inst_bl|inst_jirl|(inst_beq&beq_jump)|(inst_bne&~beq_jump))};
-`endif
+assign ShakeStatus = {
+    RAM_IFU_valid,IFU_RAM_ready,
+    IFU_RAM_valid,RAM_IFU_ready,
+    EXU_ISU_valid,ISU_EXU_ready,
+    ISU_IDU_ready,IDU_ISU_valid,
+    IFU_IDU_valid,IDU_IFU_ready,
+    IDU_EXU_valid,EXU_IDU_ready,
+    EXU_MEM_valid,MEM_EXU_ready,
+    MEM_ISU_valid,ISU_MEM_ready
+};
 
-`define SEQUENTIAL_LOGIC
-`ifdef SEQUENTIAL_LOGIC
-integer i;
-// reg [19:0]test_temp_addr;
-always @(posedge clk) begin
-    if(rst)begin
-        r_PC   <= `RST_PC;
-        r_inst <= 32'b0;
-        r_t_EXTRAM_addr <= 20'b0;
-        r_t_EXTRAM_data <= 32'b0;
-        r_t_EXTRAM_oe_n <= 1'b1;
-        r_t_EXTRAM_be_n <= 4'hf;
-        r_t_EXTRAM_ce_n <= 1'h1;
-        r_t_EXTRAM_we_n <= 1'b1;
-        for (i=0; i<31; i=i+1) begin : gen_rst_gpr
-            GPR[i]<=32'b0;
-        end
-        // test_temp_addr <= 8'h10;
-    end
-    else begin
-        r_PC   <= w_nxt_PC;
-        r_inst <= w_nxt_inst;
-        if(~(r_t_EXTRAM_ce_n|r_t_EXTRAM_oe_n))begin
-            GPR[r_t_GPR_rd] <= EXTRAM_dq;
-        end
-        if(~w_t_EXTRAM_ce_n)begin
-            // test_temp_addr <= test_temp_addr+1;
-            // r_t_EXTRAM_addr <= test_temp_addr;
-            // r_t_EXTRAM_data <= w_inst;
-            // r_t_EXTRAM_oe_n <= 1'b1;
-            // r_t_EXTRAM_we_n <= 1'b0;
-            // r_t_EXTRAM_ce_n <= 1'b0;;
-            // r_t_EXTRAM_be_n <= 4'b0;;
-            
-            r_t_EXTRAM_addr <= w_t_EXTRAM_addr;
-            r_t_EXTRAM_data <= w_t_EXTRAM_data;
-            r_t_EXTRAM_oe_n <= w_t_EXTRAM_oe_n;
-            r_t_EXTRAM_we_n <= w_t_EXTRAM_we_n;
-            r_t_EXTRAM_ce_n <= w_t_EXTRAM_ce_n;
-            r_t_EXTRAM_be_n <= w_t_EXTRAM_be_n;
-            r_t_GPR_rd      <= w_rd_addr;
-            // r_t_GPR_rd      <= w_rd_addr;
-        end
-        if(w_rd_wen)begin
-           GPR[w_rd_addr] <=w_rd_wdata;
-        end
-    end
-end
+// -------------------- 数据通路观测 --------------------
+assign o32_simulate0 = IFU_IDU_pc;                // 取指 PC
+assign o32_simulate1 = IFU_IDU_inst;              // 当前指令编码
+assign o32_simulate2 = RAM_IFU_rdata;           
+assign o32_simulate3 = IDU_EXU_rs1;               // 源操作数 1
+assign o32_simulate4 = IDU_EXU_rs2;               // 源操作数 2
+assign o32_simulate5 = EXU_ISU_res;               // 执行结果
+assign o32_simulate6 = EXU_MEM_addr;              // 访存地址
+assign o32_simulate7 = MEM_ISU_data;              // Load 读回数据
+
+// -------------------- 控制/状态打包观测 --------------------
+// o32_simulate8:
+// [31:21] IDU_EXU_func     指令功能类型
+// [20:16] IDU_EXU_rd       译码级目标寄存器
+// [15:11] EXU_ISU_rd       执行级写回目标寄存器
+// [10:6]  MEM_ISU_rd       访存级写回目标寄存器
+// [5]     ISU_IFU_PCmis    分支预测错误/冲刷
+// [4]     MEM_st_en        Store 使能
+// [3]     MEM_ld_en        Load 使能
+// [2]     ISU_wb_en        写回使能
+assign o32_simulate8 = {
+    IDU_EXU_func,
+    IDU_EXU_rd,
+    EXU_ISU_rd,
+    MEM_ISU_rd,
+    ISU_IFU_PCmis,
+    MEM_st_en,
+    MEM_ld_en,
+    ISU_wb_en,
+    2'b11
+};
+
 `endif
 
 endmodule
