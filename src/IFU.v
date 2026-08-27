@@ -6,47 +6,40 @@ module IFU(
     // output [31:0] o32_simulate,
     // output        o01_simulate,
 
-    output        IFU_IDU_valid,
-    output [31:0] IFU_IDU_pc,
-    output [31:0] IFU_IDU_inst,
-    output [ 1:0] IFU_IDU_id,
-    input         IDU_IFU_ready,
+    output        o01_IFU_IDU_valid,
+    output [31:0] o32_IFU_IDU_PC,
+    output [31:0] o32_IFU_IDU_inst,
+    output [ 1:0] o02_IFU_IDU_id,
+    input         i01_IDU_IFU_ready,
 
-    input         ISU_IFU_PCmis,
-    input  [31:0] ISU_IFU_PCnew,
+    input         i01_ISU_IFU_PCmis,
+    input  [31:0] i32_ISU_IFU_PCnew,
 
-    output        IFU_RAM_valid,
-    output [31:0] IFU_RAM_raddr,
-    input         RAM_IFU_ready,
+    output        o01_IFU_RAM_valid,
+    output [31:0] o32_IFU_RAM_raddr,
+    input         i01_RAM_IFU_ready,
 
-    input         RAM_IFU_valid,
-    input  [31:0] RAM_IFU_rdata,
-    output        IFU_RAM_ready
+    input         i01_RAM_IFU_valid,
+    input  [31:0] i32_RAM_IFU_rdata,
+    output        o01_IFU_RAM_ready
 );
-reg [31:0] reg_pc;
-reg [31:0] reg_inst;
-reg [31:0] reg_nxt_inst;
-// reg        reg_nxt_valid;
-reg        reg_valid;
 
-wire [31:0] wire_inst;
-wire        wire_valid;
-wire [31:0] wire_pc;
-wire [31:0] wire_nxt_pc;
-// wire        wire_nxt_valid;
+reg        r01_valid;
+reg [31:0] r32_pc;
+reg [31:0] r32_inst;
 
+wire        w01_valid;
+wire [31:0] w32_nxt_pc;
+wire [31:0] w32_pc;
+wire [31:0] w32_inst;
+wire        w01_IFU_IDU_handshake;
+wire        w01_RAM_req_handshake;
+wire        w01_RAM_res_handshake;
 
-assign wire_pc    = reg_pc;
-assign wire_inst  = reg_inst;
-assign wire_valid = reg_valid;
-// assign wire_nxt_valid = reg_nxt_valid;
+assign w32_pc   = r32_pc;
+assign w32_inst = r32_inst;
+assign w01_valid = r01_valid;
 
-assign IFU_IDU_pc = wire_pc;
-assign IFU_IDU_inst = wire_inst;
-assign IFU_RAM_raddr = wire_nxt_pc;
-assign IFU_RAM_valid = 1'b1;
-assign IFU_RAM_ready = 1'b1;
-assign IFU_IDU_id = wire_pc[6:5];
 
 /*超级简单的分支预测，主要是处理几条无条件跳转指令
 | 0 1 0 1 0 0 offs[15:0] offs[25:16]                    | B         |
@@ -56,36 +49,38 @@ assign IFU_IDU_id = wire_pc[6:5];
 wire [ 5:0] op_31_26;
 wire [15:0] offs1;
 wire [ 9:0] offs2;
-assign {op_31_26,offs1,offs2} = wire_inst;
-assign wire_nxt_pc = wire_pc + (op_31_26[5:1] == 5'b01010  ? {{ 4{offs2[ 9]}},offs2,offs1,2'b00}:
+assign {op_31_26,offs1,offs2} = w32_inst;
+assign w32_nxt_pc = w32_pc + (op_31_26[5:1] == 5'b01010  ? {{ 4{offs2[ 9]}},offs2,offs1,2'b00}:
                                 op_31_26      == 6'b010111 ? {{14{offs1[15]}},offs1,2'b00}:
                                 32'h4);
 
+assign o32_IFU_IDU_inst  = w32_inst;
+assign o32_IFU_IDU_PC    = w32_pc;
+assign o02_IFU_IDU_id    = w32_pc[4:3];
 
-wire IFU_IDU_handshake;
-wire RAM_resp_handshake;
-assign IFU_IDU_valid = wire_valid;
-assign IFU_IDU_handshake = IFU_IDU_valid & IDU_IFU_ready;
-assign RAM_resp_handshake = RAM_IFU_valid & IFU_RAM_ready;
+assign o32_IFU_RAM_raddr = w32_nxt_pc;
+
+assign o01_IFU_IDU_valid = w01_valid;
+assign w01_IFU_IDU_handshake = o01_IFU_IDU_valid & i01_IDU_IFU_ready;
+assign o01_IFU_RAM_ready = 1'b1;
+assign w01_RAM_res_handshake = o01_IFU_RAM_ready & i01_RAM_IFU_valid;
+assign o01_IFU_RAM_valid = 1'b1;
+assign w01_RAM_req_handshake = i01_RAM_IFU_ready & o01_IFU_RAM_valid;
+
+
 always @(posedge clk) begin
-    reg_valid <= 1'b0;
     if(rst)begin
-        reg_pc <= `RST_PC;
-        reg_inst <= 32'b0;
-        reg_valid <= 1'b0;//这边缘怎么还平行了
-        // reg_nxt_valid <= 1'b0;
+        r01_valid <= 1'b0;
+        r32_inst <= 32'b0;
+        r32_pc <= `RST_PC;
     end
-    else if (ISU_IFU_PCmis) begin
-        reg_pc <= ISU_IFU_PCnew - 32'h4;
-        reg_valid <= 1'b0;
-        // reg_nxt_valid <= 1'b0;
-    end 
     else begin
-        if((IFU_IDU_handshake|~wire_valid)&RAM_resp_handshake)begin
-            reg_pc <= wire_nxt_pc;
-            reg_inst <= RAM_IFU_rdata;
-            reg_valid <= 1'b1;
-            // reg_nxt_valid <= 1'b1;//这里是多此一举
+        if(w01_IFU_IDU_handshake|~w01_valid)begin
+            r01_valid<=w01_RAM_res_handshake;
+            if(w01_RAM_res_handshake)begin
+                r32_inst <= i32_RAM_IFU_rdata;
+                r32_pc   <= w32_nxt_pc;
+            end
         end
     end
 end

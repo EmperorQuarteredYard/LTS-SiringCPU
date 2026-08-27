@@ -2,67 +2,70 @@
 module IDU
 (
     input         clk,           //时钟输入
-    input         rst,           //低电平复位信号
+    input         rst,           //高电平复位信号
+
+`ifdef ENVIRONMENT_SIMULATE
     output [31:0] o32_simulate,
+`endif
 
-	input         IFU_IDU_valid, //IFU有效信号
-	input  [31:0] IFU_IDU_pc,    //IFU PC输入
-	input  [31:0] IFU_IDU_inst,  //IFU指令输入
-	input  [ 1:0] IFU_IDU_id,    //IFU ID输入
-	output        IDU_IFU_ready, //IDU IFU准备好信号
+	input         i01_IFU_IDU_valid, //IFU有效信号
+	input  [31:0] i32_IFU_IDU_PC,    //IFU PC输入
+	input  [31:0] i32_IFU_IDU_inst,  //IFU指令输入
+	input  [ 1:0] i02_IFU_IDU_id,    //IFU ID输入
+	output        o01_IDU_IFU_ready, //IDU IFU准备好信号
 
-	output        IDU_ISU_valid, //IDU ISU有效信号——这里要不要改成IDU_GPR_valid呢？
-	output [ 4:0] IDU_GPR_rj,
-	output [ 4:0] IDU_GPR_rk,
-	output [ 4:0] IDU_GPR_rd,
-	input  [31:0] GPR_IDU_rj,
-	input  [31:0] GPR_IDU_rk,
-	input  [31:0] GPR_IDU_rd,//IDU通过ISU访问GPR；GPR的读行为不需要经过一拍
+	output        o01_IDU_ISU_valid, //IDU ISU有效信号——这里要不要改成IDU_GPR_valid呢？
+	output [ 4:0] o05_IDU_GPR_rj,
+	output [ 4:0] o05_IDU_GPR_rk,
+	output [ 4:0] o05_IDU_GPR_rd,
+	input  [31:0] i32_GPR_IDU_rj,
+	input  [31:0] i32_GPR_IDU_rk,
+	input  [31:0] i32_GPR_IDU_rd,//IDU通过ISU访问GPR；GPR的读行为不需要经过一拍
 
-	output [31:0] IDU_ISU_PCnew,
-	output        IDU_ISU_PCmis,
-	input         ISU_IDU_ready,  //ISU IDU准备好信号
+	output [31:0] o32_IDU_ISU_PCnew,
+	output        o01_IDU_ISU_PCmis,
+	input         i01_ISU_IDU_ready,  //ISU IDU准备好信号
 
-	output        IDU_EXU_valid,
-	output [31:0] IDU_EXU_rs1,
-	output [31:0] IDU_EXU_rs2,
-	output [ 3:0] IDU_EXU_ope,
-	output [ 4:0] IDU_EXU_rd,//当不写回寄存器时，rd为0，LoongArch特性
-	output [10:0] IDU_EXU_func,//这里描述得到的结果是什么含义，0-0-0-0-0-0-0-0-st-ld-wb(就是是不是R型指令)
-    output [ 3:0] IDU_EXU_wstrb,
-    output [31:0] IDU_EXU_wdata,
-	input         EXU_IDU_ready
+	output        o01_IDU_EXU_valid,
+	output [31:0] o32_IDU_EXU_rs1,
+	output [31:0] o32_IDU_EXU_rs2,
+	output [ 3:0] o04_IDU_EXU_ope,
+	output [ 4:0] o05_IDU_EXU_rd,//当不写回寄存器时，rd为0，LoongArch特性
+	output [10:0] o11_IDU_EXU_func,//这里描述得到的结果是什么含义，0-0-0-0-0-0-0-0-st-ld-wb(就是是不是R型指令)
+    output [ 3:0] o04_IDU_EXU_wstrb,
+    output [31:0] o32_IDU_EXU_wdata,
+	input         i01_EXU_IDU_ready
 );
 
-reg [31:0] reg_PC;
-reg [ 1:0] reg_PCid;
-reg        reg_valid;
-reg  [31:0] reg_inst;
 
-wire [31:0] wire_PC;
-wire [31:0] wire_inst;
-wire        wire_valid;
-wire [ 1:0] wire_PCid;
+reg [31:0] r32_PC;
+reg [ 1:0] r02_PCid;
+reg        r01_valid;
+reg [31:0] r32_inst;
 
-assign wire_PC = reg_PC;
-assign wire_inst = reg_inst;
-assign wire_valid = reg_valid;
-assign wire_PCid = reg_PCid;
+wire [31:0] w32_PC;
+wire [31:0] w32_inst;
+wire        w01_valid;
+wire [ 1:0] w02_PCid;
+
+assign w32_PC = r32_PC;
+assign w32_inst = r32_inst;
+assign w01_valid = r01_valid;
+assign w02_PCid = r02_PCid;
 
 `define HANDSHAKE_ANALYSE
 `ifdef HANDSHAKE_ANALYSE
-wire IFU_IDU_handshake;
-wire ISU_IDU_handshake;
-wire IDU_EXU_handshake;
+wire w01_IFU_IDU_handshake;
+wire w01_ISU_IDU_handshake;
+wire w01_IDU_EXU_handshake;
 
-assign IDU_IFU_ready = (~wire_valid|(IDU_EXU_handshake&ISU_IDU_handshake));
-assign IDU_EXU_valid = wire_valid & ISU_IDU_handshake;//由于GPR的读取是异步的，故本周期内能完成操作，必定取决于能否与ISU握手
-assign ISU_IDU_ready = 1'b1;
-assign IDU_ISU_valid = wire_valid;
+assign o01_IDU_IFU_ready = ((~w01_valid)|(w01_IDU_EXU_handshake&w01_ISU_IDU_handshake));
+assign o01_IDU_EXU_valid = w01_valid & w01_ISU_IDU_handshake;//由于GPR的读取是异步的，故本周期内能完成操作，必定取决于能否与ISU握手
+assign o01_IDU_ISU_valid = w01_valid;
 
-assign IFU_IDU_handshake = IFU_IDU_valid & IDU_IFU_ready;
-assign ISU_IDU_handshake = IDU_ISU_valid & ISU_IDU_ready;//其实这里并没有用到握手信号，因为我没有考虑到一些情况，比如数据前递，等用到的时候再加吧
-assign IDU_EXU_handshake = IDU_EXU_valid & EXU_IDU_ready;
+assign w01_IFU_IDU_handshake = i01_IFU_IDU_valid & o01_IDU_IFU_ready;
+assign w01_ISU_IDU_handshake = o01_IDU_ISU_valid & i01_ISU_IDU_ready;//其实这里并没有用到握手信号，因为我没有考虑到一些情况，比如数据前递，等用到的时候再加吧
+assign w01_IDU_EXU_handshake = o01_IDU_EXU_valid & i01_EXU_IDU_ready;
 `endif
 
 `define OP_ANALYSE
@@ -80,7 +83,7 @@ wire [19:0] i20;
 wire [15:0] i16;
 wire [25:0] i26;
 
-assign {op_31_26,op_25_22,op_21_20,op_19_15,rk,rj,rd} = wire_inst;
+assign {op_31_26,op_25_22,op_21_20,op_19_15,rk,rj,rd} = w32_inst;
 
 wire        inst_ld_o_st;
 wire        inst_ld_x;
@@ -228,11 +231,11 @@ wire imm_4;
 wire imm_en;
 wire offs_en;
 
-assign si20 = wire_inst[24:5];
-assign si12 = wire_inst[21:10];
-assign ui12 = wire_inst[21:10];
-assign offs16 = wire_inst[25:10];
-assign offs26 = {wire_inst[9:0],wire_inst[25:0]};
+assign si20 = w32_inst[24:5];
+assign si12 = w32_inst[21:10];
+assign ui12 = w32_inst[21:10];
+assign offs16 = w32_inst[25:10];
+assign offs26 = {w32_inst[9:0],w32_inst[25:0]};
 
 assign imm_si20_12 = inst_lu12i_w | inst_pcaddu12i;
 assign imm_si12 = inst_addi_w | inst_ld_b | inst_ld_w | inst_st_b | inst_st_w | inst_cacop;//这里b,bl等等实际上应当触发流水线冲刷，并且将PC更新
@@ -264,12 +267,12 @@ assign rj_en = rk_en|inst_addi_w|inst_andi|inst_ori|inst_slli_w|inst_srli_w|inst
 assign rd_en = inst_beq|inst_bne;//这两者需要立即读取ed并进行比较，且取代的是rk(src1)的位置
 assign rd_addr_set_1=inst_bl;
 assign pc_en = inst_pcaddu12i;
-assign IDU_GPR_rj = rj & {5{rk_en}};
-assign IDU_GPR_rk = rk & {5{rk_en}};
-assign IDU_GPR_rd = rd & {5{rk_en}};//为了避免意外访问到不需要的、被锁存的内容，这里指定在不访问时，将访问的寄存器指定为永远不该被锁定的r0(但是不排除哪个傻蛋会把r0给锁了，那就完蛋了)
-assign IDU_EXU_rs1 = IDU_GPR_rj&{32{rj_en}}|wire_PC&{32{pc_en}};
-assign IDU_EXU_rs2 = IDU_GPR_rk&{32{rk_en}}|imm&{32{imm_en}};
-assign IDU_EXU_wdata = IDU_GPR_rd;
+assign o05_IDU_GPR_rj = rj & {5{rk_en}};
+assign o05_IDU_GPR_rk = rk & {5{rk_en}};
+assign o05_IDU_GPR_rd = rd & {5{rk_en}};//为了避免意外访问到不需要的、被锁存的内容，这里指定在不访问时，将访问的寄存器指定为永远不该被锁定的r0(但是不排除哪个傻蛋会把r0给锁了，那就完蛋了)
+assign o32_IDU_EXU_rs1 = i32_GPR_IDU_rj&{32{rj_en}}|w32_PC&{32{pc_en}};
+assign o32_IDU_EXU_rs2 = i32_GPR_IDU_rk&{32{rk_en}}|imm&{32{imm_en}};
+assign o32_IDU_EXU_wdata = i32_GPR_IDU_rd;
 `endif
 
 `define OPE_ANALYSE//对下一阶段的操作的解析
@@ -277,7 +280,7 @@ assign IDU_EXU_wdata = IDU_GPR_rd;
 wire rd_wb_en;
 
 assign rd_wb_en = inst_lu12i_w|inst_pcaddu12i|inst_addi_w|inst_add_w|inst_sub_w|inst_slt|inst_and|inst_andi|inst_or|inst_ori|inst_xor|inst_sll_w|inst_slli_w|inst_srli_w|inst_mul_w|inst_jirl|inst_bl;
-assign IDU_EXU_ope =`alu_opadd & {4{inst_lu12i_w|inst_pcaddu12i|inst_addi_w|inst_add_w|inst_ld_o_st|inst_bl|inst_jirl}}|//其实这里不用写这么多的..毕竟`alu_oppadd是0，但为了保留拓展性
+assign o04_IDU_EXU_ope =`alu_opadd & {4{inst_lu12i_w|inst_pcaddu12i|inst_addi_w|inst_add_w|inst_ld_o_st|inst_bl|inst_jirl}}|//其实这里不用写这么多的..毕竟`alu_oppadd是0，但为了保留拓展性
                     `alu_opmux  & {4{inst_mul_w}}|
                     `alu_opsub  & {4{inst_sub_w}}|
                     // `alu_opequ  & {4{0}}|
@@ -293,9 +296,9 @@ assign IDU_EXU_ope =`alu_opadd & {4{inst_lu12i_w|inst_pcaddu12i|inst_addi_w|inst
                     // `alu_opasr  & {4{0}}|
                     // `alu_oprcl  & {4{0}}|
                     // `alu_oprc   & {4{0}};
-assign IDU_EXU_func = {1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,inst_st_x,inst_ld_x,rd_wb_en|inst_bl};
-assign IDU_EXU_rd   = rd & {5{rd_wb_en}} | {4'b0,inst_bl};
-assign IDU_EXU_wstrb = (op_25_22[1:0] == 2'b00)?4'b0001:
+assign o11_IDU_EXU_func = {1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,inst_st_x,inst_ld_x,rd_wb_en|inst_bl};
+assign o05_IDU_EXU_rd   = rd & {5{rd_wb_en}} | {4'b0,inst_bl};
+assign o04_IDU_EXU_wstrb = (op_25_22[1:0] == 2'b00)?4'b0001:
                        (op_25_22[1:0] == 2'b01)?4'b0011:
                        4'b1111;
                     //    op_25_22[1:0] == 2'b10?4'b1111:
@@ -304,10 +307,11 @@ assign IDU_EXU_wstrb = (op_25_22[1:0] == 2'b00)?4'b0001:
 `define JUM_ANALYSE//跳转指令处理
 `ifdef JUM_ANALYSE
 wire beq_jump;
-assign beq_jump = (GPR_IDU_rj == GPR_IDU_rd);
-assign IDU_ISU_PCnew = (inst_jirl?GPR_IDU_rj:wire_PC) + (offs &{32{offs_en}});
-assign IDU_ISU_PCmis = inst_jirl|inst_b|inst_bl|(inst_beq&beq_jump)|(inst_bne&~beq_jump);
+assign beq_jump = (i32_GPR_IDU_rj == i32_GPR_IDU_rd);
+assign o32_IDU_ISU_PCnew = (inst_jirl?i32_GPR_IDU_rj:w32_PC) + (offs &{32{offs_en}});
+assign o01_IDU_ISU_PCmis = inst_jirl|inst_b|inst_bl|(inst_beq&beq_jump)|(inst_bne&~beq_jump);
 `endif
+`ifdef ENVIRONMENT_SIMULATE
 assign o32_simulate =
 {
     inst_jirl,offs_en,beq_jump,1'bz,
@@ -319,20 +323,21 @@ assign o32_simulate =
     inst_beq,inst_bne,inst_jirl,inst_mul_w,
     inst_cpucfg,inst_csrwr,inst_csrxchg,inst_cacop
 };
+`endif
 always @(posedge clk) begin
     if (rst) begin
-        reg_PC    <= 32'b0;
-        reg_PCid    <= 2'b0;
-        reg_inst  <= 32'b0;
-		reg_valid <= 1'b0;
+        r32_PC    <= 32'b0;
+        r02_PCid    <= 2'b0;
+        r32_inst  <= 32'b0;
+		r01_valid <= 1'b0;
     end 
 	else begin
         // 如果当前可以接收新指令（空闲）且 IFU 提供有效数据，则锁存
-        if (IFU_IDU_handshake) begin//握手时，这一拍必须传递数据
-            reg_PC    <= IFU_IDU_pc;
-            reg_PCid  <= IFU_IDU_id;
-            reg_inst  <= IFU_IDU_inst;
-            reg_valid <= 1'b1;
+        if (w01_IFU_IDU_handshake) begin//握手时，这一拍必须传递数据
+            r32_PC    <= i32_IFU_IDU_PC;
+            r02_PCid  <= i02_IFU_IDU_id;
+            r32_inst  <= i32_IFU_IDU_inst;
+            r01_valid <= 1'b1;
         end
     end
 end

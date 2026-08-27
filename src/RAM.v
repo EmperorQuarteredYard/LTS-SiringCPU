@@ -1,7 +1,7 @@
 `include "define.vh"
 module RAM#(
-    parameter MAX_WAIT_CYCLE = 3,//1-31
-    parameter MAX_TASK_CYCLE = 15
+    parameter MAX_WAIT_CYCLE = 3,//1-31，只在启用异步RAM时有效
+    parameter MAX_TASK_CYCLE = 4 //这里是任务销毁的轮数，一定不能小于MAX_WAIT_CYCLE
 )(
     input clk,
     input rst,
@@ -31,90 +31,91 @@ module RAM#(
 );
 
 `ifdef RAM_BEHAVIOR_ASYN
+//此时使用异步RAM模型
+reg         r01_requ_ready;
+reg         r01_resp_allow;
+reg         r01_reg_valid;
+reg  [19:0] r20_requ_addr;
+reg         r01_requ_type;
+reg  [31:0] r32_requ_wdata;
+reg  [ 3:0] r04_requ_wstrb;
+reg         r01_requ_exdat;
 
-reg [ 4:0] wait_cycle;
-reg [ 4:0] task_cycle;
-reg [ 1:0] reg_cntrs ;
-reg [19:0] reg_addr  ;
-reg [31:0] reg_data  ;
-reg [ 3:0] reg_wstrb ;
-reg        reg_exdat ;
-reg        reg_entype;
-reg [31:0] reg_rdata ;
-reg        reg_valid ;
+wire [19:0] w20_requ_addr;
+wire        w01_requ_type;
+wire [31:0] w32_requ_wdata;
+wire [ 3:0] w04_requ_wstrb;
+wire        w01_requ_exdat;
 
-wire [ 1:0] wire_cntrs;
-wire [19:0] wire_addr ;
-wire [31:0] wire_data ;
-wire [ 3:0] wire_wstrb;
-wire        wire_exdat;
-wire [ 1:0] nxt_stage ;
-wire        wire_we_n;//注意！这里已经是取反了的
-wire        wire_re_n;
-wire        wire_valid;
+assign w20_requ_addr  = r20_requ_addr;
+assign w01_requ_type  = r01_requ_type;
+assign w32_requ_wdata = r32_requ_wdata;
+assign w04_requ_wstrb = r04_requ_wstrb;
+assign w01_requ_exdat = r01_requ_exdat;
 
-assign wire_cntrs  = reg_cntrs ;
-assign wire_addr   = reg_addr  ;
-assign wire_data   = reg_data  ;
-assign wire_wstrb  = reg_wstrb ;
-assign wire_exdat  = reg_exdat ;
-assign wire_we_n   =~reg_entype;
-assign wire_re_n   = reg_entype;
-assign wire_valid  = reg_valid;
+reg [4:0] r05_wait_count;
+reg [4:0] r05_task_count;
 
-wire requ_handshake;
-wire resp_handshake;
+wire w01_requ_handshake;
+wire w01_resp_handshake;
 
-assign requ_handshake = requ_ready & requ_valid;
-assign resp_handshake = resp_ready & resp_valid;
+assign w01_requ_handshake = requ_valid & requ_ready;
+assign w01_resp_handshake = resp_valid & resp_ready;
+assign requ_ready = r01_requ_ready;
+assign resp_valid = (r05_wait_count == 5'b0) & r01_resp_allow;
 
-assign RAM_be_n    =~wire_wstrb;
-assign RAM_addr    = wire_addr;
-assign RAM_data    = wire_we_n?32'bz:wire_data;
-assign RAM_addr    = wire_addr;
-assign RAM_oe_n    = wire_re_n;
-assign RAM_we_n    = wire_we_n;
-assign RAM_ce_n    =~wire_valid;
-assign resp_rdata  = resp_valid? 32'bz:(RAM_data&{{8{wire_wstrb[3]}},{8{wire_wstrb[2]}},{8{wire_wstrb[1]}},{8{wire_wstrb[0]}}});
-assign resp_valid = wait_cycle == 0 & (requ_addr == wire_addr);
-assign resp_exdat = wire_exdat;
-assign requ_ready = ((wait_cycle == 0)&resp_handshake)|~wire_valid|(task_cycle == 0);
+assign RAM_data = r01_requ_type?w32_requ_wdata:32'bz;
+assign RAM_addr = r20_requ_addr;
+assign RAM_be_n = ~w04_requ_wstrb;
+assign RAM_ce_n = ~r01_reg_valid;
+assign RAM_oe_n = r01_requ_type;
+assign RAM_we_n = ~r01_requ_type;
 
+assign resp_rdata = RAM_data;
+assign resp_exdat = w01_requ_exdat;
 
 always @(posedge clk) begin
-    if (rst) begin
-        // 同步复位，清空状态和计数器
-        reg_cntrs  <= 2'b00;
-        reg_addr   <= 20'b0;
-        reg_data   <= 32'b0;
-        reg_wstrb  <= 4'hf;
-        reg_exdat  <= 1'b0;
-        reg_rdata  <= 32'b0;
-        reg_entype <= 1'b0;
-        reg_valid  <= 1'b0;
-        task_cycle <= MAX_TASK_CYCLE;
-        wait_cycle <= 4'b0;
-    end 
-    else begin
-        if(wait_cycle!=0)wait_cycle <= wait_cycle - 1;
-        if(wait_cycle!=0)task_cycle <= task_cycle - 1;
-        if (requ_handshake) begin
-            wait_cycle<= MAX_WAIT_CYCLE&{5{~requ_type}};
-            task_cycle<= MAX_TASK_CYCLE;
-            reg_valid <= 1'b1;
-            reg_addr  <= requ_addr;
-            reg_data  <= requ_wdata;
-            reg_wstrb <= requ_wstrb;
-            reg_exdat <= requ_exdat;
-            reg_entype<= requ_type;
-        end
-        // 读访问的最后一个周期采样RAM数据
+    if(rst)begin
+        r01_resp_allow <=  1'b0;
+        r01_requ_ready <=  1'b1;
+        r20_requ_addr  <= 20'b0;
+        r01_requ_type  <=  1'b0;
+        r32_requ_wdata <= 32'b0;
+        r04_requ_wstrb <=  4'b0;
+        r01_requ_exdat <=  1'b0;
+        r01_reg_valid  <=  1'b0;
+        r05_wait_count <=  1'b0;
+        r05_task_count <=  1'b0;
     end
-end
+    else begin
+        if(w01_requ_handshake)begin
+            r01_requ_ready <= 1'b0;
+            r20_requ_addr  <= requ_addr;
+            r01_requ_type  <= requ_type;
+            r32_requ_wdata <= requ_wdata;
+            r04_requ_wstrb <= requ_wstrb;
+            r01_requ_exdat <= requ_exdat;
+            r05_wait_count <= MAX_WAIT_CYCLE;
+            r05_task_count <= MAX_TASK_CYCLE;
+            r01_reg_valid  <= 1'b1;
+            r01_resp_allow <= 1'b1;
+        end
+        else begin
+            if(w01_resp_handshake|(r05_task_count == 5'b0))begin
+                r01_reg_valid <= 1'b0;
+                r01_requ_ready <= 1'b1;
+                r01_resp_allow <= 1'b0;
+                r01_requ_exdat <= ((r05_task_count == 5'b0))|r01_requ_exdat;
+            end
+            if (r05_wait_count != 5'b0) r05_wait_count <= r05_wait_count - 5'b1;
+            if (r05_task_count != 5'b0) r05_task_count <= r05_task_count - 5'b1;
+        end
+    end
 
+end
 `ifdef RAM_BEHAVIOR_SYNC
-wire //这里不要改！看到这里报错了说明你在define.vh中同时开启了同步、异步RAM的定义
-wire all_are_exist;
+这里不要改！看到这里报错了说明你在define.vh中同时开启了同步、异步RAM的定义
+wire SYNC_ASYC_ENVIRONMENT_MUTIDIFINE;
 `endif
 `else
 `ifdef RAM_BEHAVIOR_SYNC
@@ -131,8 +132,8 @@ assign resp_exdat = requ_exdat;
 
 assign o32_simulate = {32{requ_type}};
 `else
-wire //这里不要改！看到这里报错了说明你在define.vh中同时关闭了同步、异步RAM的定义
-wire all_not_exist;
+这里不要改！看到这里报错了说明你在define.vh中同时关闭了同步、异步RAM的定义
+wire SYNC_ASYC_ENVIRONMENT_NOTFOUND;
 `endif
 
 
