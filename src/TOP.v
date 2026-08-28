@@ -33,6 +33,9 @@ module TOP(
 
 wire        w01_EXU_IDU_ready;
 wire        w01_EXU_ISU_valid;
+wire        w01_EXU_ISU_wb_en;
+wire        w01_EXU_MEM_ld_en;
+wire        w01_EXU_MEM_st_en;
 wire        w01_EXU_MEM_valid;
 wire        w01_IDU_EXU_valid;
 wire        w01_IDU_IFU_ready;
@@ -45,17 +48,20 @@ wire        w01_ISU_EXU_ready;
 wire        w01_ISU_IDU_ready;
 wire        w01_ISU_IFU_PCmis;
 wire        w01_ISU_MEM_ready;
-wire        w01_EXU_ISU_wb_en;
 wire        w01_MEM_EXU_ready;
 wire        w01_MEM_ISU_valid;
-wire        w01_EXU_MEM_ld_en;
-wire        w01_EXU_MEM_st_en;
+wire        w01_MEM_RAM_ready;
+wire        w01_MEM_RAM_valid;
+wire        w01_MEM_RAM_type;
 wire        w01_RAM_IFU_ready;
 wire        w01_RAM_IFU_valid;
+wire        w01_RAM_MEM_ready;
+wire        w01_RAM_MEM_valid;
 wire [ 1:0] w02_IFU_IDU_id;
 wire [ 3:0] w04_EXU_MEM_wstrb;
 wire [ 3:0] w04_IDU_EXU_ope;
 wire [ 3:0] w04_IDU_EXU_wstrb;
+wire [ 3:0] w04_MEM_RAM_wstrb;
 wire [ 4:0] w05_EXU_ISU_rd;
 wire [ 4:0] w05_EXU_MEM_rd;
 wire [ 4:0] w05_IDU_EXU_rd;
@@ -79,49 +85,18 @@ wire [31:0] w32_IFU_IDU_inst;
 wire [31:0] w32_IFU_RAM_raddr;
 wire [31:0] w32_ISU_IFU_PCnew;
 wire [31:0] w32_MEM_ISU_data;
+wire [31:0] w32_MEM_RAM_addr;
+wire [31:0] w32_MEM_RAM_data;
 wire [31:0] w32_RAM_IFU_rdata;
+wire [31:0] w32_RAM_MEM_rdata;
 wire [31:0] w32_simulate;
 
 //=============悬空连线=============
-assign w01_MEM_EXU_ready = 1'b0;
-assign w01_MEM_ISU_valid = 1'b0;
-assign w05_MEM_ISU_rd = 5'b0;
-assign w32_MEM_ISU_data = 32'b0;
 
 //=============异常连线=============
 //这里用`/**/`包含多个异常的连线，如多个output对应到同一个连线(但是允许一个连线对多个input)
 
 //=============模块实例=============
-EXU u_EXU (
-    .clk(clk),
-    .rst(rst),
-
-    .i01_IDU_EXU_valid(w01_IDU_EXU_valid),
-    .i32_IDU_EXU_rs1(w32_IDU_EXU_rs1),
-    .i32_IDU_EXU_rs2(w32_IDU_EXU_rs2),
-    .i04_IDU_EXU_ope(w04_IDU_EXU_ope),
-    .i05_IDU_EXU_rd(w05_IDU_EXU_rd),
-    .i11_IDU_EXU_func(w11_IDU_EXU_func),
-    .i32_IDU_EXU_wdata(w32_IDU_EXU_wdata),
-    .i04_IDU_EXU_wstrb(w04_IDU_EXU_wstrb),
-    .o01_EXU_IDU_ready(w01_EXU_IDU_ready),
-
-    .o01_EXU_MEM_valid(w01_EXU_MEM_valid),
-    .o32_EXU_MEM_addr(w32_EXU_MEM_addr),
-    .o32_EXU_MEM_wdata(w32_EXU_MEM_wdata),
-    .o04_EXU_MEM_wstrb(w04_EXU_MEM_wstrb),
-    .o05_EXU_MEM_rd(w05_EXU_MEM_rd),
-    .o01_EXU_MEM_ld_en(w01_EXU_MEM_ld_en),
-    .o01_EXU_MEM_st_en(w01_EXU_MEM_st_en),
-    .i01_MEM_EXU_ready(w01_MEM_EXU_ready),
-
-    .o01_EXU_ISU_valid(w01_EXU_ISU_valid),
-    .o05_EXU_ISU_rd(w05_EXU_ISU_rd),
-    .o32_EXU_ISU_res(w32_EXU_ISU_res),
-    .o01_EXU_ISU_wb_en(w01_EXU_ISU_wb_en),
-    .i01_ISU_EXU_ready(w01_ISU_EXU_ready)
-);
-
 IDU u_IDU (
     .clk(clk),
     .rst(rst),
@@ -216,6 +191,66 @@ ISU u_ISU (
     .o01_ISU_EXU_ready(w01_ISU_EXU_ready)
 );
 
+MEM u_MEM (
+    .clk(clk),
+    .rst(rst),
+
+    .i01_EXU_MEM_valid(w01_EXU_MEM_valid),
+    .i01_EXU_MEM_ld_en(w01_EXU_MEM_ld_en),
+    .i01_EXU_MEM_st_en(w01_EXU_MEM_st_en),
+    .i32_EXU_MEM_wdata(w32_EXU_MEM_wdata),
+    .i32_EXU_MEM_addr(w32_EXU_MEM_addr),
+    .i05_EXU_MEM_rd(w05_EXU_MEM_rd),
+    .i04_EXU_MEM_wstrb(w04_EXU_MEM_wstrb),
+    .o01_MEM_EXU_ready(w01_MEM_EXU_ready),
+
+    .o01_MEM_ISU_valid(w01_MEM_ISU_valid),
+    .o32_MEM_ISU_data(w32_MEM_ISU_data),
+    .o05_MEM_ISU_rd(w05_MEM_ISU_rd),
+    .i01_ISU_MEM_ready(w01_ISU_MEM_ready),
+
+    .o01_MEM_RAM_valid(w01_MEM_RAM_valid),
+    .o32_MEM_RAM_addr(w32_MEM_RAM_addr),
+    .o32_MEM_RAM_data(w32_MEM_RAM_data),
+    .o01_MEM_RAM_type(w01_MEM_RAM_type),
+    .o04_MEM_RAM_wstrb(w04_MEM_RAM_wstrb),
+    .i01_RAM_MEM_ready(w01_RAM_MEM_ready),
+
+    .i01_RAM_MEM_valid(w01_RAM_MEM_valid),
+    .i32_RAM_MEM_rdata(w32_RAM_MEM_rdata),
+    .o01_MEM_RAM_ready(w01_MEM_RAM_ready)
+);
+
+EXU u_EXU (
+    .clk(clk),
+    .rst(rst),
+
+    .i01_IDU_EXU_valid(w01_IDU_EXU_valid),
+    .i32_IDU_EXU_rs1(w32_IDU_EXU_rs1),
+    .i32_IDU_EXU_rs2(w32_IDU_EXU_rs2),
+    .i04_IDU_EXU_ope(w04_IDU_EXU_ope),
+    .i05_IDU_EXU_rd(w05_IDU_EXU_rd),
+    .i11_IDU_EXU_func(w11_IDU_EXU_func),
+    .i32_IDU_EXU_wdata(w32_IDU_EXU_wdata),
+    .i04_IDU_EXU_wstrb(w04_IDU_EXU_wstrb),
+    .o01_EXU_IDU_ready(w01_EXU_IDU_ready),
+
+    .o01_EXU_MEM_valid(w01_EXU_MEM_valid),
+    .o32_EXU_MEM_addr(w32_EXU_MEM_addr),
+    .o32_EXU_MEM_wdata(w32_EXU_MEM_wdata),
+    .o04_EXU_MEM_wstrb(w04_EXU_MEM_wstrb),
+    .o05_EXU_MEM_rd(w05_EXU_MEM_rd),
+    .o01_EXU_MEM_ld_en(w01_EXU_MEM_ld_en),
+    .o01_EXU_MEM_st_en(w01_EXU_MEM_st_en),
+    .i01_MEM_EXU_ready(w01_MEM_EXU_ready),
+
+    .o01_EXU_ISU_valid(w01_EXU_ISU_valid),
+    .o05_EXU_ISU_rd(w05_EXU_ISU_rd),
+    .o32_EXU_ISU_res(w32_EXU_ISU_res),
+    .o01_EXU_ISU_wb_en(w01_EXU_ISU_wb_en),
+    .i01_ISU_EXU_ready(w01_ISU_EXU_ready)
+);
+
 
 
 
@@ -259,17 +294,17 @@ RAM #(
     .RAM_ce_n       (EXTRAM_ce_n),
     .RAM_oe_n       (EXTRAM_oe_n),
     .RAM_we_n       (EXTRAM_we_n),
-    .requ_valid     (1'b0),
-    .requ_addr      (20'b0),
-    .requ_type      (1'b0),
-    .requ_wdata     (32'b0),
-    .requ_wstrb     (4'b0000),
+    .requ_valid     (w01_MEM_RAM_valid),
+    .requ_addr      (w32_MEM_RAM_addr[21:2]),
+    .requ_type      (w01_MEM_RAM_type),
+    .requ_wdata     (w32_MEM_RAM_data),
+    .requ_wstrb     (w04_MEM_RAM_wstrb),
     .requ_exdat     (1'b0),
-    .requ_ready     (),
-    .resp_valid     (),
-    .resp_rdata     (),
+    .requ_ready     (w01_RAM_MEM_ready),
+    .resp_valid     (w01_RAM_MEM_valid),
+    .resp_rdata     (w32_RAM_MEM_rdata),
     .resp_exdat     (),
-    .resp_ready     (1'b0)
+    .resp_ready     (w01_MEM_RAM_ready)
 );
 
 `ifdef ENVIRONMENT_SIMULATE
