@@ -20,6 +20,7 @@ module MEM(
     output [31:0] o32_MEM_RAM_addr,
     output [31:0] o32_MEM_RAM_data,
     output        o01_MEM_RAM_type,
+    output        o04_MEM_RAM_wstrb,
     input         i01_RAM_MEM_ready,
 
     input         i01_RAM_MEM_valid,
@@ -75,6 +76,7 @@ assign o05_MEM_ISU_rd   = w05_EXU_MEM_rd;
 assign o32_MEM_RAM_addr = w32_EXU_MEM_addr;
 assign o32_MEM_RAM_data = w32_EXU_MEM_wdata;
 assign o01_MEM_RAM_type = w01_EXU_MEM_st_en;
+assign o04_MEM_RAM_wstrb= w04_EXU_MEM_wstrb;
 
 always @(posedge clk) begin
     if(rst) begin
