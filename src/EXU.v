@@ -60,7 +60,7 @@ assign w11_IDU_EXU_func  = r11_IDU_EXU_func;
 assign w32_IDU_EXU_wdata = r32_IDU_EXU_wdata;
 assign w04_IDU_EXU_wstrb = r04_IDU_EXU_wstrb;
 
-assign w01_valid         = (w11_IDU_EXU_func ==11'b0?0:1)&w01_reg_valid;
+assign w01_valid         = (w11_IDU_EXU_func == 11'b0 ? 1'b0 : 1'b1)&w01_reg_valid;
 
 ALU u_ALU(
     .op(w04_IDU_EXU_ope),
