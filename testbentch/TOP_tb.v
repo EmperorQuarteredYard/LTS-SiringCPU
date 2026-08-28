@@ -100,17 +100,17 @@ module TOP_tb;
     initial begin
         for (i = 0; i < 2048; i = i + 1) INSTR_MEM[i] = 32'h00000000;
         // 示例：INSTR_MEM[0] = {7'b0001010, 20'd1, 5'd1};
-        INSTR_MEM[11'h000] = {`7 'b0001010,20'h1c400  , 5'h6};
-        INSTR_MEM[11'h001] = {`10'b0000001010 ,12'h100, 5'h6, 5'h7};
-        INSTR_MEM[11'h002] = {`10'b0000001010 ,12'h1, 5'h0, 5'h2};
-        INSTR_MEM[11'h003] = {`10'b0000001010 ,12'h1, 5'h0, 5'h3};
-        INSTR_MEM[11'h004] = {`17'b00000000000100000  , 5'h2, 5'h3, 5'h2};
-        INSTR_MEM[11'h005] = {`10'b0010100110   ,12'h0, 5'h6, 5'h2};
-        INSTR_MEM[11'h006] = {`10'b0000001010 ,12'h4, 5'h6, 5'h6};
-        INSTR_MEM[11'h007] = {`17'b00000000000100000  , 5'h3, 5'h0, 5'h4};
-        INSTR_MEM[11'h008] = {`17'b00000000000100000  , 5'h2, 5'h0, 5'h3};
-        INSTR_MEM[11'h009] = {`17'b00000000000100000  , 5'h4, 5'h0, 5'h2};
-        INSTR_MEM[11'h00a] = {`6 'b010111    ,16'hfffa, 5'h6, 5'h7};
+        INSTR_MEM[11'h000] = {`inst_LU12I_W,20'h1c400  , 5'h6};
+        INSTR_MEM[11'h001] = {`inst_ADDI_W ,12'h100, 5'h6, 5'h7};
+        INSTR_MEM[11'h002] = {`inst_ADDI_W ,12'h1, 5'h0, 5'h2};
+        INSTR_MEM[11'h003] = {`inst_ADDI_W ,12'h1, 5'h0, 5'h3};
+        INSTR_MEM[11'h004] = {`inst_ADD_W  , 5'h2, 5'h3, 5'h2};
+        INSTR_MEM[11'h005] = {`inst_ST_W   ,12'h0, 5'h6, 5'h2};
+        INSTR_MEM[11'h006] = {`inst_ADDI_W ,12'h4, 5'h6, 5'h6};
+        INSTR_MEM[11'h007] = {`inst_ADD_W  , 5'h3, 5'h0, 5'h4};
+        INSTR_MEM[11'h008] = {`inst_ADD_W  , 5'h2, 5'h0, 5'h3};
+        INSTR_MEM[11'h009] = {`inst_ADD_W  , 5'h4, 5'h0, 5'h2};
+        INSTR_MEM[11'h00a] = {`inst_BNE    ,16'hfffa, 5'h6, 5'h7};
         /*
         INSTR_MEM[] = {`inst_,};
         */
