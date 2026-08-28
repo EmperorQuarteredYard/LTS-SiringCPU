@@ -2,39 +2,39 @@ module EXU(
     input         clk,           //时钟输入
     input         rst,           //低电平复位信号
     
-	input         IDU_EXU_valid,
-	input  [31:0] IDU_EXU_rs1,
-	input  [31:0] IDU_EXU_rs2,
-	input  [ 3:0] IDU_EXU_ope,
-	input  [ 4:0] IDU_EXU_rd,
-	input  [10:0] IDU_EXU_func,//这里描述得到的结果是什么含义，0-0-0-0-0-0-0-0-st-ld-wb(就是是不是R型指令)
-    input  [31:0] IDU_EXU_wdata,
-    input  [ 3:0] IDU_EXU_wstrb,//高有效
-	output        EXU_IDU_ready,
+	input         i01_IDU_EXU_valid,
+	input  [31:0] i32_IDU_EXU_rs1,
+	input  [31:0] i32_IDU_EXU_rs2,
+	input  [ 3:0] i04_IDU_EXU_ope,
+	input  [ 4:0] i05_IDU_EXU_rd,
+	input  [10:0] i11_IDU_EXU_func,//这里描述得到的结果是什么含义，0-0-0-0-0-0-0-0-st-ld-wb(就是是不是R型指令)
+    input  [31:0] i32_IDU_EXU_wdata,
+    input  [ 3:0] i04_IDU_EXU_wstrb,//高有效
+	output        o01_EXU_IDU_ready,
 
-    output        EXU_MEM_valid,
-    output [31:0] EXU_MEM_addr,
-    output [31:0] EXU_MEM_wdata,
-    output [ 3:0] EXU_MEM_wstrb,//高有效
-    output [ 4:0] EXU_MEM_rd,
-    output        MEM_ld_en,
-    output        MEM_st_en,
-    input         MEM_EXU_ready,
+    output        o01_EXU_MEM_valid,
+    output [31:0] o32_EXU_MEM_addr,
+    output [31:0] o32_EXU_MEM_wdata,
+    output [ 3:0] o04_EXU_MEM_wstrb,//高有效
+    output [ 4:0] i05_EXU_MEM_rd,
+    output        o01_MEM_ld_en,
+    output        o01_MEM_st_en,
+    input         i01_MEM_EXU_ready,
 
-    output        EXU_ISU_valid,
-    output [ 4:0] EXU_ISU_rd,
-    output [31:0] EXU_ISU_res,
-    output        ISU_wb_en,
-    input         ISU_EXU_ready
+    output        o01_EXU_ISU_valid,
+    output [ 4:0] i05_EXU_ISU_rd,
+    output [31:0] o32_EXU_ISU_res,
+    output        o01_ISU_wb_en,
+    input         i01_ISU_EXU_ready
 );
-reg [31:0] reg_rs1;
-reg [31:0] reg_rs2;
-reg [31:0] reg_wdata;
-reg [ 3:0] reg_ope;
-reg [ 4:0] reg_rd;
-reg [10:0] reg_func;
-reg        reg_valid;
-reg [ 3:0] reg_wstrb;
+reg [31:0] r32_rs1;
+reg [31:0] r32_rs2;
+reg [31:0] r32_wdata;
+reg [ 3:0] r04_ope;
+reg [ 4:0] r05_rd;
+reg [10:0] r11_func;
+reg        r01_valid;
+reg [ 3:0] r04_wstrb;
 
 
 wire [31:0] wire_rs1;

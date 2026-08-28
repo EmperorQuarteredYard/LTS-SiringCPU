@@ -65,7 +65,7 @@ wire        w01_EXU_IDU_ready;
 assign w32_GPR_IDU_rj = 32'b0;
 assign w32_GPR_IDU_rk = 32'b0;
 assign w32_GPR_IDU_rd = 32'b0;
-assign w01_ISU_IDU_ready = 1'b1;
+assign w01_ISU_IDU_ready = 1'b0;
 assign w01_EXU_IDU_ready = 1'b1;
 
 IFU u_IFU (

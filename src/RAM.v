@@ -32,6 +32,7 @@ module RAM#(
 
 `ifdef RAM_BEHAVIOR_ASYN
 //此时使用异步RAM模型
+//非对齐内存访问应当在总线中增加，但是目前并不需要做
 reg         r01_requ_ready;
 reg         r01_resp_allow;
 reg         r01_reg_valid;
@@ -40,18 +41,22 @@ reg         r01_requ_type;
 reg  [31:0] r32_requ_wdata;
 reg  [ 3:0] r04_requ_wstrb;
 reg         r01_requ_exdat;
+reg         r01_tran_allow;//transaction,需要内存总线事务
+reg         r01_tran_stage;
 
 wire [19:0] w20_requ_addr;
 wire        w01_requ_type;
 wire [31:0] w32_requ_wdata;
 wire [ 3:0] w04_requ_wstrb;
 wire        w01_requ_exdat;
+wire        w01_reg_valid;
 
 assign w20_requ_addr  = r20_requ_addr;
 assign w01_requ_type  = r01_requ_type;
 assign w32_requ_wdata = r32_requ_wdata;
 assign w04_requ_wstrb = r04_requ_wstrb;
 assign w01_requ_exdat = r01_requ_exdat;
+assign w01_reg_valid  = r01_reg_valid;
 
 reg [4:0] r05_wait_count;
 reg [4:0] r05_task_count;
@@ -64,14 +69,18 @@ assign w01_resp_handshake = resp_valid & resp_ready;
 assign requ_ready = r01_requ_ready;
 assign resp_valid = (r05_wait_count == 5'b0) & r01_resp_allow;
 
-assign RAM_data = r01_requ_type?w32_requ_wdata:32'bz;
-assign RAM_addr = r20_requ_addr;
+assign RAM_data = w01_requ_type?w32_requ_wdata:32'bz;
+assign RAM_addr = w20_requ_addr;
 assign RAM_be_n = ~w04_requ_wstrb;
-assign RAM_ce_n = ~r01_reg_valid;
-assign RAM_oe_n = r01_requ_type;
-assign RAM_we_n = ~r01_requ_type;
+assign RAM_ce_n = ~w01_reg_valid;
+assign RAM_oe_n = w01_requ_type;
+assign RAM_we_n = ~w01_requ_type;
 
-assign resp_rdata = RAM_data;
+assign resp_rdata = (w01_requ_type&~w01_requ_exdat)?32'b0:{
+    {8{w04_requ_wstrb[3]}}&RAM_data[31:24],
+    {8{w04_requ_wstrb[2]}}&RAM_data[23:16],
+    {8{w04_requ_wstrb[1]}}&RAM_data[15: 8],
+    {8{w04_requ_wstrb[0]}}&RAM_data[ 7: 0]};
 assign resp_exdat = w01_requ_exdat;
 
 always @(posedge clk) begin
@@ -127,8 +136,12 @@ assign RAM_oe_n = requ_type;
 assign RAM_we_n = ~requ_type;
 assign requ_ready = 1'b1;
 assign resp_valid = 1'b1;
-assign resp_rdata = requ_type?32'bz:RAM_data;
-assign resp_exdat = requ_exdat;
+assign resp_rdata = (requ_type&~resp_exdat)?32'b0:{
+    {8{requ_wstrb[3]}}&RAM_data[31:24],
+    {8{requ_wstrb[2]}}&RAM_data[23:16],
+    {8{requ_wstrb[1]}}&RAM_data[15: 8],
+    {8{requ_wstrb[0]}}&RAM_data[ 7: 0]};
+assign resp_exdat = requ_exdat|(requ_addr[1:0]!=2'b00);
 
 assign o32_simulate = {32{requ_type}};
 `else
