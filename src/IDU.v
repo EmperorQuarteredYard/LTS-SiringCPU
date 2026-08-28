@@ -218,7 +218,7 @@ wire [11:0] si12;
 wire [11:0] ui12;
 // wire [ 4:0] ui5;
 wire [15:0] offs16;
-wire [15:0] offs26;
+wire [25:0] offs26;
 wire [13:0] csr14;
 wire imm_si20_12;
 wire imm_si12;

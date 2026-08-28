@@ -45,11 +45,11 @@ wire        w01_ISU_EXU_ready;
 wire        w01_ISU_IDU_ready;
 wire        w01_ISU_IFU_PCmis;
 wire        w01_ISU_MEM_ready;
-wire        w01_ISU_wb_en;
+wire        w01_EXU_ISU_wb_en;
 wire        w01_MEM_EXU_ready;
 wire        w01_MEM_ISU_valid;
-wire        w01_MEM_ld_en;
-wire        w01_MEM_st_en;
+wire        w01_EXU_MEM_ld_en;
+wire        w01_EXU_MEM_st_en;
 wire        w01_RAM_IFU_ready;
 wire        w01_RAM_IFU_valid;
 wire [ 1:0] w02_IFU_IDU_id;
@@ -111,14 +111,14 @@ EXU u_EXU (
     .o32_EXU_MEM_wdata(w32_EXU_MEM_wdata),
     .o04_EXU_MEM_wstrb(w04_EXU_MEM_wstrb),
     .o05_EXU_MEM_rd(w05_EXU_MEM_rd),
-    .o01_MEM_ld_en(w01_MEM_ld_en),
-    .o01_MEM_st_en(w01_MEM_st_en),
+    .o01_EXU_MEM_ld_en(w01_EXU_MEM_ld_en),
+    .o01_EXU_MEM_st_en(w01_EXU_MEM_st_en),
     .i01_MEM_EXU_ready(w01_MEM_EXU_ready),
 
     .o01_EXU_ISU_valid(w01_EXU_ISU_valid),
     .o05_EXU_ISU_rd(w05_EXU_ISU_rd),
     .o32_EXU_ISU_res(w32_EXU_ISU_res),
-    .o01_ISU_wb_en(w01_ISU_wb_en),
+    .o01_EXU_ISU_wb_en(w01_EXU_ISU_wb_en),
     .i01_ISU_EXU_ready(w01_ISU_EXU_ready)
 );
 
@@ -211,8 +211,8 @@ ISU u_ISU (
     .i01_EXU_ISU_valid(w01_EXU_ISU_valid),
     .i05_EXU_ISU_rd(w05_EXU_ISU_rd),
     .i32_EXU_ISU_res(w32_EXU_ISU_res),
-    .i01_MEM_ld_en(w01_MEM_ld_en),
-    .i01_ISU_wb_en(w01_ISU_wb_en),
+    .i01_EXU_MEM_ld_en(w01_EXU_MEM_ld_en),
+    .i01_EXU_ISU_wb_en(w01_EXU_ISU_wb_en),
     .o01_ISU_EXU_ready(w01_ISU_EXU_ready)
 );
 
@@ -279,7 +279,7 @@ assign o32_simulate2 = w32_IDU_ISU_PCnew;
 assign o32_simulate3 = w32_IDU_EXU_rs1;
 assign o32_simulate4 = w32_IDU_EXU_rs2;
 assign o32_simulate5 = w32_IDU_EXU_wdata;
-assign o32_simulate6 = {w01_MEM_st_en,w01_MEM_ld_en,19'bz,w11_IDU_EXU_func};
+assign o32_simulate6 = {w01_EXU_MEM_st_en,w01_EXU_MEM_ld_en,19'bz,w11_IDU_EXU_func};
 assign o32_simulate7 = w32_EXU_MEM_addr;
 // assign o32_simulate8 = ;
 // assign o32_simulate9 = ;

@@ -25,8 +25,8 @@ module ISU(
     input         i01_EXU_ISU_valid,
     input  [ 4:0] i05_EXU_ISU_rd,
     input  [31:0] i32_EXU_ISU_res,
-    input         i01_MEM_ld_en,
-    input         i01_ISU_wb_en,
+    input         i01_EXU_MEM_ld_en,
+    input         i01_EXU_ISU_wb_en,
     output        o01_ISU_EXU_ready
 );
 `define BASE_PART
@@ -44,9 +44,9 @@ reg [31:0] GPR [31:0];
 reg [31:0] GPR_lock;
 
 // assign GPR[w_EXU_rd[4:0]] = (w_EXU_rd!= 5'b0 & w_wb_en)?w_EXU_res:32'b0;
-assign o32_GPR_IDU_rj = (i01_ISU_wb_en&(i05_EXU_ISU_rd == i05_IDU_GPR_rj))?i32_EXU_ISU_res:GPR[i05_IDU_GPR_rj]&{32{i01_IDU_ISU_valid}};//如果EXU在当前周期中产生了IDU正在访问的结果，那么返回EXU的值 注意！这里是非常危险的！不要复用！
-assign o32_GPR_IDU_rk = (i01_ISU_wb_en&(i05_EXU_ISU_rd == i05_IDU_GPR_rk))?i32_EXU_ISU_res:GPR[i05_IDU_GPR_rk]&{32{i01_IDU_ISU_valid}};
-assign o32_GPR_IDU_rd = (i01_ISU_wb_en&(i05_EXU_ISU_rd == i05_IDU_GPR_rd))?i32_EXU_ISU_res:GPR[i05_IDU_GPR_rd]&{32{i01_IDU_ISU_valid}};
+assign o32_GPR_IDU_rj = (i01_EXU_ISU_wb_en&(i05_EXU_ISU_rd == i05_IDU_GPR_rj))?i32_EXU_ISU_res:GPR[i05_IDU_GPR_rj]&{32{i01_IDU_ISU_valid}};//如果EXU在当前周期中产生了IDU正在访问的结果，那么返回EXU的值 注意！这里是非常危险的！不要复用！
+assign o32_GPR_IDU_rk = (i01_EXU_ISU_wb_en&(i05_EXU_ISU_rd == i05_IDU_GPR_rk))?i32_EXU_ISU_res:GPR[i05_IDU_GPR_rk]&{32{i01_IDU_ISU_valid}};
+assign o32_GPR_IDU_rd = (i01_EXU_ISU_wb_en&(i05_EXU_ISU_rd == i05_IDU_GPR_rd))?i32_EXU_ISU_res:GPR[i05_IDU_GPR_rd]&{32{i01_IDU_ISU_valid}};
 //这里简单做一个前推。ld产生的东西我就落锁了
 `endif
 
@@ -77,10 +77,10 @@ always @(posedge clk) begin
             GPR[i05_MEM_ISU_rd]<= i32_MEM_ISU_data;
         end
         if(w01_IDU_ISU_handshake)begin
-            if(i01_ISU_wb_en)begin
+            if(i01_EXU_ISU_wb_en)begin
                 GPR[i05_EXU_ISU_rd] <= i32_EXU_ISU_res;
             end
-            if(i01_MEM_ld_en & i05_MEM_ISU_rd != 5'b0 )begin
+            if(i01_EXU_MEM_ld_en & i05_MEM_ISU_rd != 5'b0 )begin
                 GPR_lock[i05_MEM_ISU_rd] <= 1;//这里实际上应当要防信号毛刺
             end
         end
