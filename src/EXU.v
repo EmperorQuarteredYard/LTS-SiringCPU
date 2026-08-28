@@ -16,13 +16,13 @@ module EXU(
     output [31:0] o32_EXU_MEM_addr,
     output [31:0] o32_EXU_MEM_wdata,
     output [ 3:0] o04_EXU_MEM_wstrb,//高有效
-    output [ 4:0] i05_EXU_MEM_rd,
+    output [ 4:0] o05_EXU_MEM_rd,
     output        o01_MEM_ld_en,
     output        o01_MEM_st_en,
     input         i01_MEM_EXU_ready,
 
     output        o01_EXU_ISU_valid,
-    output [ 4:0] i05_EXU_ISU_rd,
+    output [ 4:0] o05_EXU_ISU_rd,
     output [31:0] o32_EXU_ISU_res,
     output        o01_ISU_wb_en,
     input         i01_ISU_EXU_ready
@@ -37,78 +37,78 @@ reg        r01_valid;
 reg [ 3:0] r04_wstrb;
 
 
-wire [31:0] wire_rs1;
-wire [31:0] wire_rs2;
-wire [31:0] wire_wdata;
-wire [ 3:0] wire_ope;
-wire [ 4:0] wire_rd;
-wire [10:0] wire_func;
-wire [31:0] wire_res;
-wire        wire_valid;
-wire        wire_st_en;
-wire        wire_ld_en;
-wire        wire_wb_en;
-wire [ 3:0] wire_wstrb;
+wire [31:0] w32_rs1;
+wire [31:0] w32_rs2;
+wire [31:0] w32_wdata;
+wire [ 3:0] w04_ope;
+wire [ 4:0] w05_rd;
+wire [10:0] w11_func;
+wire [31:0] w32_res;
+wire        w01_valid;
+wire        w01_st_en;
+wire        w01_ld_en;
+wire        w01_wb_en;
+wire [ 3:0] w04_wstrb;
 
-assign wire_rs1   = reg_rs1;
-assign wire_rs2   = reg_rs2;
-assign wire_wdata = reg_wdata;
-assign wire_ope   = reg_ope;
-assign wire_rd    = reg_rd;
-assign wire_func  = reg_func;
-assign wire_wstrb = reg_wstrb;
-assign wire_valid = reg_valid;
+assign w32_rs1   = r32_rs1;
+assign w32_rs2   = r32_rs2;
+assign w32_wdata = r32_wdata;
+assign w04_ope   = r04_ope;
+assign w05_rd    = r05_rd;
+assign w11_func  = r11_func;
+assign w04_wstrb = r04_wstrb;
+assign w01_valid = r01_valid;
 
-assign wire_st_en = wire_func[2];
-assign wire_ld_en = wire_func[1];
-assign wire_wb_en = wire_func[0];
-// assign wire_alu_en = wire_func[0];
+assign w01_st_en = w11_func[2];
+assign w01_ld_en = w11_func[1];
+assign w01_wb_en = w11_func[0];
+// assign w01_alu_en = w11_func[0];
 ALU ALU(
-    .op(wire_ope),
-    .src1(wire_rs1),
-    .src2(wire_rs2),
-    .res(wire_res)
+    .op(w04_ope),
+    .src1(w32_rs1),
+    .src2(w32_rs2),
+    .res(w32_res)
 );
 
-wire IDU_EXU_handshake;
-wire EXU_ISU_handshake;
-wire EXU_MEM_handshake;
+wire w01_IDU_EXU_handshake;
+wire w01_EXU_ISU_handshake;
+wire w01_EXU_MEM_handshake;
 
-assign IDU_EXU_handshake = IDU_EXU_valid & EXU_IDU_ready;
-assign EXU_ISU_handshake = EXU_ISU_valid & ISU_EXU_ready;
-assign EXU_ISU_valid = wire_valid;
-assign EXU_IDU_ready = (~wire_valid|(EXU_ISU_handshake&wire_wb_en)|(EXU_MEM_handshake&(wire_ld_en|wire_st_en)));
+assign w01_IDU_EXU_handshake = i01_IDU_EXU_valid & o01_EXU_IDU_ready;
+assign w01_EXU_ISU_handshake = o01_EXU_ISU_valid & i01_ISU_EXU_ready;
+assign o01_EXU_ISU_valid = w01_valid;
+assign o01_EXU_IDU_ready = (~w01_valid|(w01_EXU_ISU_handshake&w01_wb_en)|(w01_EXU_MEM_handshake&(w01_ld_en|w01_st_en)));
 
-assign EXU_ISU_rd    = wire_rd;
-assign EXU_ISU_res   = wire_res;
-assign EXU_MEM_valid = MEM_ld_en | MEM_st_en;
-assign EXU_MEM_wdata = wire_wdata;
-assign EXU_MEM_wstrb = wire_wstrb;
-assign EXU_MEM_addr  = wire_res;
-assign EXU_MEM_rd    = wire_rd;
-assign MEM_ld_en     = wire_ld_en;
-assign MEM_st_en     = wire_st_en;
-assign ISU_wb_en     = wire_rd != 5'b0 & wire_wb_en;//当不允许写入或写入的寄存器为0时，则向下传不写入
+assign o05_EXU_ISU_rd    = w05_rd;
+assign o32_EXU_ISU_res   = w32_res;
+assign o01_EXU_MEM_valid = o01_MEM_ld_en | o01_MEM_st_en;
+assign o32_EXU_MEM_wdata = w32_wdata;
+assign o04_EXU_MEM_wstrb = w04_wstrb;
+assign o32_EXU_MEM_addr  = w32_res;
+assign o05_EXU_MEM_rd    = w05_rd;
+assign o01_MEM_ld_en     = w01_ld_en;
+assign o01_MEM_st_en     = w01_st_en;
+assign o01_ISU_wb_en     = w05_rd != 5'b0 & w01_wb_en;//当不允许写入或写入的寄存器为0时，则向下传不写入
 
 always @(posedge clk) begin
     if(rst)begin
-        reg_rs1   <= 32'b0;
-        reg_rs2   <= 32'b0;
-        reg_ope   <= 4'b0;
-        reg_rd    <= 5'b0;
-        reg_func  <= 11'b0;
-        reg_valid <= 1'b0;
-        reg_wstrb <= 4'hf;
-        reg_wdata <= 32'b0;
+        r32_rs1   <= 32'b0;
+        r32_rs2   <= 32'b0;
+        r04_ope   <= 4'b0;
+        r05_rd    <= 5'b0;
+        r11_func  <= 11'b0;
+        r01_valid <= 1'b0;
+        r04_wstrb <= 4'hf;
+        r32_wdata <= 32'b0;
     end
     else begin
-        if(IDU_EXU_handshake)begin
-            reg_rs1   <= IDU_EXU_rs1;
-            reg_rs2   <= IDU_EXU_rs2;
-            reg_ope   <= IDU_EXU_ope;
-            reg_rd    <= IDU_EXU_rd;
-            reg_func  <= IDU_EXU_func;
-            reg_wstrb <= IDU_EXU_wstrb;
+        if(w01_IDU_EXU_handshake)begin
+            r32_rs1   <= i32_IDU_EXU_rs1;
+            r32_rs2   <= i32_IDU_EXU_rs2;
+            r04_ope   <= i04_IDU_EXU_ope;
+            r05_rd    <= i05_IDU_EXU_rd;
+            r11_func  <= i11_IDU_EXU_func;
+            r04_wstrb <= i04_IDU_EXU_wstrb;
         end
     end
 end

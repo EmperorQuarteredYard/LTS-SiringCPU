@@ -29,94 +29,162 @@ module TOP(
     output        EXTRAM_we_n,
     output        EXTRAM_ce_n,
     output [3:0]  EXTRAM_be_n
-);
+);//=============连线信号=============
 
+wire        w01_EXU_IDU_ready;
+wire        w01_EXU_ISU_valid;
+wire        w01_EXU_MEM_valid;
+wire        w01_IDU_EXU_valid;
+wire        w01_IDU_IFU_ready;
+wire        w01_IDU_ISU_PCmis;
+wire        w01_IDU_ISU_valid;
+wire        w01_IFU_IDU_valid;
+wire        w01_IFU_RAM_ready;
 wire        w01_IFU_RAM_valid;
-wire [31:0] w32_IFU_RAM_raddr;
+wire        w01_ISU_EXU_ready;
+wire        w01_ISU_IDU_ready;
+wire        w01_ISU_IFU_PCmis;
+wire        w01_ISU_wb_en;
+wire        w01_MEM_EXU_ready;
+wire        w01_MEM_ld_en;
+wire        w01_MEM_st_en;
 wire        w01_RAM_IFU_ready;
 wire        w01_RAM_IFU_valid;
-wire [31:0] w32_RAM_IFU_rdata;
-wire        w01_IFU_RAM_ready;
-wire [31:0] w32_IFU_IDU_PC;
-wire [31:0] w32_IFU_IDU_inst;
 wire [ 1:0] w02_IFU_IDU_id;
-wire        w01_IFU_IDU_valid;
-wire        w01_IDU_IFU_ready;
+wire [ 3:0] w04_EXU_MEM_wstrb;
+wire [ 3:0] w04_IDU_EXU_ope;
+wire [ 3:0] w04_IDU_EXU_wstrb;
+wire [ 4:0] w05_EXU_ISU_rd;
+wire [ 4:0] w05_EXU_MEM_rd;
+wire [ 4:0] w05_IDU_EXU_rd;
+wire [ 4:0] w05_IDU_GPR_rd;
 wire [ 4:0] w05_IDU_GPR_rj;
 wire [ 4:0] w05_IDU_GPR_rk;
-wire [ 4:0] w05_IDU_GPR_rd;
+wire [10:0] w11_IDU_EXU_func;
+wire [31:0] w32_EXU_ISU_res;
+wire [31:0] w32_EXU_MEM_addr;
+wire [31:0] w32_EXU_MEM_wdata;
+wire [31:0] w32_GPR_IDU_rd;
 wire [31:0] w32_GPR_IDU_rj;
 wire [31:0] w32_GPR_IDU_rk;
-wire [31:0] w32_GPR_IDU_rd;
-wire        w01_IDU_ISU_valid;
-wire [31:0] w32_IDU_ISU_PCnew;
-wire        w01_IDU_ISU_PCmis;
-wire        w01_ISU_IDU_ready;
-wire        w01_IDU_EXU_valid;
 wire [31:0] w32_IDU_EXU_rs1;
 wire [31:0] w32_IDU_EXU_rs2;
-wire [ 3:0] w04_IDU_EXU_ope;
-wire [ 4:0] w05_IDU_EXU_rd;
-wire [10:0] w11_IDU_EXU_func;
-wire [ 3:0] w04_IDU_EXU_wstrb;
 wire [31:0] w32_IDU_EXU_wdata;
-wire        w01_EXU_IDU_ready;
+wire [31:0] w32_IDU_ISU_PCnew;
+wire [31:0] w32_IFU_IDU_PC;
+wire [31:0] w32_IFU_IDU_inst;
+wire [31:0] w32_IFU_RAM_raddr;
+wire [31:0] w32_ISU_IFU_PCnew;
+wire [31:0] w32_RAM_IFU_rdata;
+wire [31:0] w32_simulate;
 
+//=============悬空连线=============
+assign w01_ISU_EXU_ready = 1'b0;
+assign w01_ISU_IDU_ready = 1'b0;
+assign w01_ISU_IFU_PCmis = 1'b0;
+assign w01_MEM_EXU_ready = 1'b0;
+assign w32_GPR_IDU_rd = 32'b0;
 assign w32_GPR_IDU_rj = 32'b0;
 assign w32_GPR_IDU_rk = 32'b0;
-assign w32_GPR_IDU_rd = 32'b0;
-assign w01_ISU_IDU_ready = 1'b0;
-assign w01_EXU_IDU_ready = 1'b1;
+assign w32_ISU_IFU_PCnew = 32'b0;
 
-IFU u_IFU (
-    .clk                    (clk),
-    .rst                    (rst),
-    .o01_IFU_IDU_valid      (w01_IFU_IDU_valid),
-    .o32_IFU_IDU_PC         (w32_IFU_IDU_PC),
-    .o32_IFU_IDU_inst       (w32_IFU_IDU_inst),
-    .o02_IFU_IDU_id         (w02_IFU_IDU_id),
-    .i01_IDU_IFU_ready      (w01_IDU_IFU_ready),
-    .i01_ISU_IFU_PCmis      (1'b0),
-    .i32_ISU_IFU_PCnew      (32'b0),
-    .o01_IFU_RAM_valid      (w01_IFU_RAM_valid),
-    .o32_IFU_RAM_raddr      (w32_IFU_RAM_raddr),
-    .i01_RAM_IFU_ready      (w01_RAM_IFU_ready),
-    .i01_RAM_IFU_valid      (w01_RAM_IFU_valid),
-    .i32_RAM_IFU_rdata      (w32_RAM_IFU_rdata),
-    .o01_IFU_RAM_ready      (w01_IFU_RAM_ready)
+//=============异常连线=============
+//这里用`/**/`包含多个异常的连线，如多个output对应到同一个连线(但是允许一个连线对多个input)
+
+//=============模块实例=============
+EXU u_EXU (
+    .clk(clk),
+    .rst(rst),
+
+    .i01_IDU_EXU_valid(w01_IDU_EXU_valid),
+    .i32_IDU_EXU_rs1(w32_IDU_EXU_rs1),
+    .i32_IDU_EXU_rs2(w32_IDU_EXU_rs2),
+    .i04_IDU_EXU_ope(w04_IDU_EXU_ope),
+    .i05_IDU_EXU_rd(w05_IDU_EXU_rd),
+    .i11_IDU_EXU_func(w11_IDU_EXU_func),
+    .i32_IDU_EXU_wdata(w32_IDU_EXU_wdata),
+    .i04_IDU_EXU_wstrb(w04_IDU_EXU_wstrb),
+    .o01_EXU_IDU_ready(w01_EXU_IDU_ready),
+
+    .o01_EXU_MEM_valid(w01_EXU_MEM_valid),
+    .o32_EXU_MEM_addr(w32_EXU_MEM_addr),
+    .o32_EXU_MEM_wdata(w32_EXU_MEM_wdata),
+    .o04_EXU_MEM_wstrb(w04_EXU_MEM_wstrb),
+    .o05_EXU_MEM_rd(w05_EXU_MEM_rd),
+    .o01_MEM_ld_en(w01_MEM_ld_en),
+    .o01_MEM_st_en(w01_MEM_st_en),
+    .i01_MEM_EXU_ready(w01_MEM_EXU_ready),
+
+    .o01_EXU_ISU_valid(w01_EXU_ISU_valid),
+    .o05_EXU_ISU_rd(w05_EXU_ISU_rd),
+    .o32_EXU_ISU_res(w32_EXU_ISU_res),
+    .o01_ISU_wb_en(w01_ISU_wb_en),
+    .i01_ISU_EXU_ready(w01_ISU_EXU_ready)
 );
 
 IDU u_IDU (
-    .clk                    (clk),
-    .rst                    (rst),
-`ifdef ENVIRONMENT_SIMULATE
-    .o32_simulate           (),
-`endif
-    .i01_IFU_IDU_valid      (w01_IFU_IDU_valid),
-    .i32_IFU_IDU_PC         (w32_IFU_IDU_PC),
-    .i32_IFU_IDU_inst       (w32_IFU_IDU_inst),
-    .i02_IFU_IDU_id         (w02_IFU_IDU_id),
-    .o01_IDU_IFU_ready      (w01_IDU_IFU_ready),
-    .o01_IDU_ISU_valid      (w01_IDU_ISU_valid),
-    .o05_IDU_GPR_rj         (w05_IDU_GPR_rj),
-    .o05_IDU_GPR_rk         (w05_IDU_GPR_rk),
-    .o05_IDU_GPR_rd         (w05_IDU_GPR_rd),
-    .i32_GPR_IDU_rj         (w32_GPR_IDU_rj),
-    .i32_GPR_IDU_rk         (w32_GPR_IDU_rk),
-    .i32_GPR_IDU_rd         (w32_GPR_IDU_rd),
-    .o32_IDU_ISU_PCnew      (w32_IDU_ISU_PCnew),
-    .o01_IDU_ISU_PCmis      (w01_IDU_ISU_PCmis),
-    .i01_ISU_IDU_ready      (w01_ISU_IDU_ready),
-    .o01_IDU_EXU_valid      (w01_IDU_EXU_valid),
-    .o32_IDU_EXU_rs1        (w32_IDU_EXU_rs1),
-    .o32_IDU_EXU_rs2        (w32_IDU_EXU_rs2),
-    .o04_IDU_EXU_ope        (w04_IDU_EXU_ope),
-    .o05_IDU_EXU_rd         (w05_IDU_EXU_rd),
-    .o11_IDU_EXU_func       (w11_IDU_EXU_func),
-    .o04_IDU_EXU_wstrb      (w04_IDU_EXU_wstrb),
-    .o32_IDU_EXU_wdata      (w32_IDU_EXU_wdata),
-    .i01_EXU_IDU_ready      (w01_EXU_IDU_ready)
+    .clk(clk),
+    .rst(rst),
+
+    `ifdef ENVIRONMENT_SIMULATE
+    .o32_simulate(w32_simulate),
+    `endif
+
+    .i01_IFU_IDU_valid(w01_IFU_IDU_valid),
+    .i32_IFU_IDU_PC(w32_IFU_IDU_PC),
+    .i32_IFU_IDU_inst(w32_IFU_IDU_inst),
+    .i02_IFU_IDU_id(w02_IFU_IDU_id),
+    .o01_IDU_IFU_ready(w01_IDU_IFU_ready),
+
+    .o01_IDU_ISU_valid(w01_IDU_ISU_valid),
+    .o05_IDU_GPR_rj(w05_IDU_GPR_rj),
+    .o05_IDU_GPR_rk(w05_IDU_GPR_rk),
+    .o05_IDU_GPR_rd(w05_IDU_GPR_rd),
+    .i32_GPR_IDU_rj(w32_GPR_IDU_rj),
+    .i32_GPR_IDU_rk(w32_GPR_IDU_rk),
+    .i32_GPR_IDU_rd(w32_GPR_IDU_rd),
+
+    .o32_IDU_ISU_PCnew(w32_IDU_ISU_PCnew),
+    .o01_IDU_ISU_PCmis(w01_IDU_ISU_PCmis),
+    .i01_ISU_IDU_ready(w01_ISU_IDU_ready),
+
+    .o01_IDU_EXU_valid(w01_IDU_EXU_valid),
+    .o32_IDU_EXU_rs1(w32_IDU_EXU_rs1),
+    .o32_IDU_EXU_rs2(w32_IDU_EXU_rs2),
+    .o04_IDU_EXU_ope(w04_IDU_EXU_ope),
+    .o05_IDU_EXU_rd(w05_IDU_EXU_rd),
+    .o11_IDU_EXU_func(w11_IDU_EXU_func),
+    .o04_IDU_EXU_wstrb(w04_IDU_EXU_wstrb),
+    .o32_IDU_EXU_wdata(w32_IDU_EXU_wdata),
+    .i01_EXU_IDU_ready(w01_EXU_IDU_ready)
 );
+
+IFU u_IFU (
+    .clk(clk),
+    .rst(rst),
+
+        // output [31:0] o32_simulate,
+        // output        o01_simulate,
+
+    .o01_IFU_IDU_valid(w01_IFU_IDU_valid),
+    .o32_IFU_IDU_PC(w32_IFU_IDU_PC),
+    .o32_IFU_IDU_inst(w32_IFU_IDU_inst),
+    .o02_IFU_IDU_id(w02_IFU_IDU_id),
+    .i01_IDU_IFU_ready(w01_IDU_IFU_ready),
+
+    .i01_ISU_IFU_PCmis(w01_ISU_IFU_PCmis),
+    .i32_ISU_IFU_PCnew(w32_ISU_IFU_PCnew),
+
+    .o01_IFU_RAM_valid(w01_IFU_RAM_valid),
+    .o32_IFU_RAM_raddr(w32_IFU_RAM_raddr),
+    .i01_RAM_IFU_ready(w01_RAM_IFU_ready),
+
+    .i01_RAM_IFU_valid(w01_RAM_IFU_valid),
+    .i32_RAM_IFU_rdata(w32_RAM_IFU_rdata),
+    .o01_IFU_RAM_ready(w01_IFU_RAM_ready)
+);
+
+
 
 RAM #(
     .MAX_WAIT_CYCLE (3),
@@ -135,7 +203,7 @@ RAM #(
     .requ_addr      (w32_IFU_RAM_raddr[21:2]),
     .requ_type      (1'b0),
     .requ_wdata     (32'b0),
-    .requ_wstrb     (4'b0000),
+    .requ_wstrb     (4'b1111),
     .requ_exdat     (1'b0),
     .requ_ready     (w01_RAM_IFU_ready),
     .resp_valid     (w01_RAM_IFU_valid),
