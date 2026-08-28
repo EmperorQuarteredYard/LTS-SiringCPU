@@ -275,12 +275,12 @@ RAM #(
 `ifdef ENVIRONMENT_SIMULATE
 assign o32_simulate0 = w32_IFU_RAM_raddr;
 assign o32_simulate1 = w32_RAM_IFU_rdata;
-// assign o32_simulate2 = ;
-assign o32_simulate3 = w32_IDU_ISU_PCnew;
-// assign o32_simulate4 = ;
-assign o32_simulate5 = w32_IDU_EXU_rs1;
-assign o32_simulate6 = w32_IDU_EXU_rs2;
-assign o32_simulate7 = w32_IDU_EXU_wdata;
+assign o32_simulate2 = w32_IDU_ISU_PCnew;
+assign o32_simulate3 = w32_IDU_EXU_rs1;
+assign o32_simulate4 = w32_IDU_EXU_rs2;
+assign o32_simulate5 = w32_IDU_EXU_wdata;
+assign o32_simulate6 = {w01_MEM_st_en,w01_MEM_ld_en,19'bz,w11_IDU_EXU_func};
+assign o32_simulate7 = w32_EXU_MEM_addr;
 // assign o32_simulate8 = ;
 // assign o32_simulate9 = ;
 // assign o01_simulate  = ;
@@ -288,10 +288,10 @@ assign ShakeStatus   = {
     w01_IFU_IDU_valid,w01_IDU_IFU_ready,
     w01_IDU_EXU_valid,w01_EXU_IDU_ready, 
     w01_EXU_MEM_valid,w01_MEM_EXU_ready,
-     w01_MEM_ISU_valid,w01_ISU_MEM_ready,
-     w01_RAM_IFU_valid,w01_IFU_RAM_ready,
-     w01_IFU_RAM_valid,w01_RAM_IFU_ready,
-     w01_IDU_ISU_valid,w01_ISU_IDU_ready,
+    w01_MEM_ISU_valid,w01_ISU_MEM_ready,
+    w01_RAM_IFU_valid,w01_IFU_RAM_ready,
+    w01_IFU_RAM_valid,w01_RAM_IFU_ready,
+    w01_IDU_ISU_valid,w01_ISU_IDU_ready,
      2'bz
     };
 `endif

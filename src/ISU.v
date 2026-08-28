@@ -74,6 +74,7 @@ always @(posedge clk) begin
         
         if(w01_MEM_ISU_handshake)begin
             GPR_lock[i05_MEM_ISU_rd] <= 0;//这里必须把MEM的解除锁放前面！
+            GPR[i05_MEM_ISU_rd]<= i32_MEM_ISU_data;
         end
         if(w01_IDU_ISU_handshake)begin
             if(i01_ISU_wb_en)begin
