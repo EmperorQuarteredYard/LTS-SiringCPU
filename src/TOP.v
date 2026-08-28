@@ -44,8 +44,10 @@ wire        w01_IFU_RAM_valid;
 wire        w01_ISU_EXU_ready;
 wire        w01_ISU_IDU_ready;
 wire        w01_ISU_IFU_PCmis;
+wire        w01_ISU_MEM_ready;
 wire        w01_ISU_wb_en;
 wire        w01_MEM_EXU_ready;
+wire        w01_MEM_ISU_valid;
 wire        w01_MEM_ld_en;
 wire        w01_MEM_st_en;
 wire        w01_RAM_IFU_ready;
@@ -60,6 +62,7 @@ wire [ 4:0] w05_IDU_EXU_rd;
 wire [ 4:0] w05_IDU_GPR_rd;
 wire [ 4:0] w05_IDU_GPR_rj;
 wire [ 4:0] w05_IDU_GPR_rk;
+wire [ 4:0] w05_MEM_ISU_rd;
 wire [10:0] w11_IDU_EXU_func;
 wire [31:0] w32_EXU_ISU_res;
 wire [31:0] w32_EXU_MEM_addr;
@@ -75,18 +78,15 @@ wire [31:0] w32_IFU_IDU_PC;
 wire [31:0] w32_IFU_IDU_inst;
 wire [31:0] w32_IFU_RAM_raddr;
 wire [31:0] w32_ISU_IFU_PCnew;
+wire [31:0] w32_MEM_ISU_data;
 wire [31:0] w32_RAM_IFU_rdata;
 wire [31:0] w32_simulate;
 
 //=============悬空连线=============
-assign w01_ISU_EXU_ready = 1'b0;
-assign w01_ISU_IDU_ready = 1'b0;
-assign w01_ISU_IFU_PCmis = 1'b0;
 assign w01_MEM_EXU_ready = 1'b0;
-assign w32_GPR_IDU_rd = 32'b0;
-assign w32_GPR_IDU_rj = 32'b0;
-assign w32_GPR_IDU_rk = 32'b0;
-assign w32_ISU_IFU_PCnew = 32'b0;
+assign w01_MEM_ISU_valid = 1'b0;
+assign w05_MEM_ISU_rd = 5'b0;
+assign w32_MEM_ISU_data = 32'b0;
 
 //=============异常连线=============
 //这里用`/**/`包含多个异常的连线，如多个output对应到同一个连线(但是允许一个连线对多个input)
@@ -184,6 +184,40 @@ IFU u_IFU (
     .o01_IFU_RAM_ready(w01_IFU_RAM_ready)
 );
 
+ISU u_ISU (
+    .clk(clk),
+    .rst(rst),
+
+    .i01_IDU_ISU_valid(w01_IDU_ISU_valid),
+    .i05_IDU_GPR_rj(w05_IDU_GPR_rj),
+    .i05_IDU_GPR_rk(w05_IDU_GPR_rk),
+    .i05_IDU_GPR_rd(w05_IDU_GPR_rd),
+    .o32_GPR_IDU_rj(w32_GPR_IDU_rj),
+    .o32_GPR_IDU_rk(w32_GPR_IDU_rk),
+    .o32_GPR_IDU_rd(w32_GPR_IDU_rd),
+
+    .i32_IDU_ISU_PCnew(w32_IDU_ISU_PCnew),
+    .i01_IDU_ISU_PCmis(w01_IDU_ISU_PCmis),
+    .o01_ISU_IDU_ready(w01_ISU_IDU_ready),
+
+    .o01_ISU_IFU_PCmis(w01_ISU_IFU_PCmis),
+    .o32_ISU_IFU_PCnew(w32_ISU_IFU_PCnew),
+
+    .i01_MEM_ISU_valid(w01_MEM_ISU_valid),
+    .i32_MEM_ISU_data(w32_MEM_ISU_data),
+    .i05_MEM_ISU_rd(w05_MEM_ISU_rd),
+    .o01_ISU_MEM_ready(w01_ISU_MEM_ready),
+
+    .i01_EXU_ISU_valid(w01_EXU_ISU_valid),
+    .i05_EXU_ISU_rd(w05_EXU_ISU_rd),
+    .i32_EXU_ISU_res(w32_EXU_ISU_res),
+    .i01_MEM_ld_en(w01_MEM_ld_en),
+    .i01_ISU_wb_en(w01_ISU_wb_en),
+    .o01_ISU_EXU_ready(w01_ISU_EXU_ready)
+);
+
+
+
 
 
 RAM #(
@@ -253,12 +287,13 @@ assign o32_simulate7 = w32_IDU_EXU_wdata;
 assign ShakeStatus   = {
     w01_IFU_IDU_valid,w01_IDU_IFU_ready,
     w01_IDU_EXU_valid,w01_EXU_IDU_ready, 
-    2'bz,
-    2'bz,
+    w01_EXU_MEM_valid,w01_MEM_EXU_ready,
+     w01_MEM_ISU_valid,w01_ISU_MEM_ready,
      w01_RAM_IFU_valid,w01_IFU_RAM_ready,
      w01_IFU_RAM_valid,w01_RAM_IFU_ready,
-     w01_IDU_ISU_valid,w01_ISU_IDU_ready, 
-     2'bz};
+     w01_IDU_ISU_valid,w01_ISU_IDU_ready,
+     2'bz
+    };
 `endif
 
 endmodule
