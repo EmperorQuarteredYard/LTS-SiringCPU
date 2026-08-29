@@ -36,6 +36,8 @@ reg [ 4:0] r05_IDU_EXU_rd;
 reg [10:0] r11_IDU_EXU_func;
 reg [31:0] r32_IDU_EXU_wdata;
 reg [ 3:0] r04_IDU_EXU_wstrb;
+reg        r01_out_ISU_allow;
+reg        r01_out_MEM_allow;
 
 wire        w01_reg_valid;
 wire [31:0] w32_IDU_EXU_rs1;
@@ -50,6 +52,8 @@ wire        w01_wb_en;
 wire        w01_st_en;
 wire        w01_ld_en;
 wire        w01_valid;
+wire        w01_out_ISU_allow;
+wire        w01_out_MEM_allow;
 
 assign w01_reg_valid     = r01_reg_valid;
 assign w32_IDU_EXU_rs1   = r32_IDU_EXU_rs1;
@@ -59,6 +63,8 @@ assign w05_IDU_EXU_rd    = r05_IDU_EXU_rd;
 assign w11_IDU_EXU_func  = r11_IDU_EXU_func;
 assign w32_IDU_EXU_wdata = r32_IDU_EXU_wdata;
 assign w04_IDU_EXU_wstrb = r04_IDU_EXU_wstrb;
+assign w01_out_ISU_allow = r01_out_ISU_allow;
+assign w01_out_MEM_allow = r01_out_MEM_allow;
 
 assign w01_valid         = (w11_IDU_EXU_func == 11'b0 ? 1'b0 : 1'b1)&w01_reg_valid;
 
@@ -76,9 +82,9 @@ wire w01_EXU_MEM_handshake;
 assign w01_IDU_EXU_handshake = i01_IDU_EXU_valid & o01_EXU_IDU_ready;
 assign w01_EXU_ISU_handshake = o01_EXU_ISU_valid & i01_ISU_EXU_ready;
 assign w01_EXU_MEM_handshake = o01_EXU_MEM_valid & i01_MEM_EXU_ready;
-assign o01_EXU_ISU_valid = w01_valid;//这里比较特殊，因为EXU需要将计算结果通过ISU前递给IDU
+assign o01_EXU_ISU_valid = (w01_wb_en|w01_ld_en)&w01_out_ISU_allow;//这里比较特殊，因为EXU需要将计算结果通过ISU前递给IDU；而R型指令在当前的设计中不经过MEM
 assign o01_EXU_IDU_ready = (~w01_valid|(w01_EXU_ISU_handshake&w01_wb_en)|(w01_EXU_MEM_handshake&(w01_ld_en|w01_st_en)));
-assign o01_EXU_MEM_valid = w01_st_en|w01_ld_en;
+assign o01_EXU_MEM_valid = (w01_st_en|w01_ld_en)&r01_out_MEM_allow;
 
 assign w01_wb_en = w11_IDU_EXU_func[0];
 assign w01_ld_en = w11_IDU_EXU_func[1];
@@ -91,7 +97,7 @@ assign o05_EXU_MEM_rd    = w05_IDU_EXU_rd;
 assign o01_EXU_MEM_ld_en     = w01_ld_en;
 assign o01_EXU_MEM_st_en     = w01_st_en;
 
-assign o01_EXU_ISU_wb_en     = w01_wb_en;
+assign o01_EXU_ISU_wb_en = w01_wb_en;
 assign o05_EXU_ISU_rd    = w05_IDU_EXU_rd;
 assign o32_EXU_ISU_res   = w32_ALU_res;
 always @(posedge clk) begin
@@ -104,9 +110,13 @@ always @(posedge clk) begin
         r11_IDU_EXU_func  <= 11'b0;
         r32_IDU_EXU_wdata <= 32'b0;
         r04_IDU_EXU_wstrb <=  4'hf;
+        r01_out_ISU_allow <=  1'b0;
+        r01_out_MEM_allow <=  1'b0;
     end
     if(w01_IDU_EXU_handshake)begin
         r01_reg_valid     <=  1'b1;
+        r01_out_ISU_allow <=  1'b1;
+        r01_out_MEM_allow <=  1'b1;
         r32_IDU_EXU_rs1   <= i32_IDU_EXU_rs1;
         r32_IDU_EXU_rs2   <= i32_IDU_EXU_rs2;
         r04_IDU_EXU_ope   <= i04_IDU_EXU_ope;
@@ -114,6 +124,10 @@ always @(posedge clk) begin
         r11_IDU_EXU_func  <= i11_IDU_EXU_func;
         r32_IDU_EXU_wdata <= i32_IDU_EXU_wdata;
         r04_IDU_EXU_wstrb <= i04_IDU_EXU_wstrb;
+    end
+    else begin
+        r01_out_ISU_allow<=~w01_EXU_ISU_handshake;
+        r01_out_MEM_allow<=~w01_EXU_MEM_handshake;
     end
 end
 endmodule
