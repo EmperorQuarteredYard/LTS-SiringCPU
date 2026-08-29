@@ -90,12 +90,12 @@ assign w01_wb_en = w11_IDU_EXU_func[0];
 assign w01_ld_en = w11_IDU_EXU_func[1];
 assign w01_st_en = w11_IDU_EXU_func[2];
 
-assign o32_EXU_MEM_addr = w32_ALU_res;
+assign o32_EXU_MEM_addr  = o01_EXU_MEM_valid?w32_ALU_res:32'bz;//鉴于难以调试，置高祖
 assign o32_EXU_MEM_wdata = w32_IDU_EXU_wdata;
 assign o04_EXU_MEM_wstrb = w04_IDU_EXU_wstrb;
 assign o05_EXU_MEM_rd    = w05_IDU_EXU_rd;
-assign o01_EXU_MEM_ld_en     = w01_ld_en;
-assign o01_EXU_MEM_st_en     = w01_st_en;
+assign o01_EXU_MEM_ld_en = w01_ld_en;
+assign o01_EXU_MEM_st_en = w01_st_en;
 
 assign o01_EXU_ISU_wb_en = w01_wb_en;
 assign o05_EXU_ISU_rd    = w05_IDU_EXU_rd;

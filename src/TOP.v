@@ -310,7 +310,7 @@ RAM #(
 `ifdef ENVIRONMENT_SIMULATE
 assign o32_simulate0 = {32{w01_IDU_ISU_PCmis}};
 assign o32_simulate1 = w32_IDU_ISU_PCnew;
-assign o32_simulate2 = w32_GPR_IDU_rd;
+assign o32_simulate2 = w32_IFU_IDU_inst;
 assign o32_simulate3 = w32_IDU_EXU_rs1;
 assign o32_simulate4 = w32_IDU_EXU_rs2;
 assign o32_simulate5 = {3'b0,w05_IDU_GPR_rj,3'b0,w05_IDU_GPR_rk,3'b0,w05_IDU_GPR_rd,8'bz};
