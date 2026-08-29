@@ -53,10 +53,10 @@ assign o32_GPR_IDU_rd = (i01_EXU_ISU_wb_en&(i05_EXU_ISU_rd == i05_IDU_GPR_rd))?i
 `define HANDSHAKE_ANALYSE
 `ifdef HANDSHAKE_ANALYSE
 wire w01_IDU_ISU_handshake;
-wire w01_ISU_EXU_handshake;
+wire w01_EXU_ISU_handshake;
 wire w01_MEM_ISU_handshake;
 assign w01_IDU_ISU_handshake = i01_IDU_ISU_valid & o01_ISU_IDU_ready;
-assign w01_ISU_EXU_handshake = i01_EXU_ISU_valid & o01_ISU_EXU_ready;
+assign w01_EXU_ISU_handshake = i01_EXU_ISU_valid & o01_ISU_EXU_ready;
 assign w01_MEM_ISU_handshake = i01_MEM_ISU_valid & o01_ISU_EXU_ready;
 assign o01_ISU_MEM_ready = 1'b1;
 assign o01_ISU_EXU_ready = 1'b1;
@@ -76,7 +76,7 @@ always @(posedge clk) begin
             GPR_lock[i05_MEM_ISU_rd] <= 0;//这里必须把MEM的解除锁放前面！
             GPR[i05_MEM_ISU_rd]<= i32_MEM_ISU_data;
         end
-        if(w01_IDU_ISU_handshake)begin
+        if(w01_EXU_ISU_handshake)begin
             if(i01_EXU_ISU_wb_en)begin
                 GPR[i05_EXU_ISU_rd] <= i32_EXU_ISU_res;
             end
