@@ -96,6 +96,9 @@ always @(posedge clk) begin
             r05_EXU_MEM_rd    <= i05_EXU_MEM_rd;
             r04_EXU_MEM_wstrb <= i04_EXU_MEM_wstrb;
         end
+        else if(w01_MEM_ISU_handshake)begin
+            r01_reg_valid <= 1'b0;
+        end
     end
 end
 endmodule
