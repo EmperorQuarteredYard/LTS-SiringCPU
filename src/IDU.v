@@ -341,7 +341,7 @@ always @(posedge clk) begin
         end
         else if(w01_IDU_EXU_handshake)begin
             r32_PC    <= 32'b0;
-            r02_PCid    <= 2'b0;
+            r02_PCid  <= 2'b0;
             r32_inst  <= 32'b0;
             r01_valid <= 1'b0;
         end

@@ -253,8 +253,8 @@ EXU u_EXU (
 
 
 RAM #(
-    .MAX_WAIT_CYCLE (3),
-    .MAX_TASK_CYCLE (15)
+    .MAX_WAIT_CYCLE (1),
+    .MAX_KEEP_CYCLE (15)
 ) u_BASE_RAM (
     .clk            (clk),
     .rst            (rst),
@@ -282,8 +282,8 @@ RAM #(
 );
 
 RAM #(
-    .MAX_WAIT_CYCLE (3),
-    .MAX_TASK_CYCLE (15)
+    .MAX_WAIT_CYCLE (1),
+    .MAX_KEEP_CYCLE (15)
 ) u_EXT_RAM (
     .clk            (clk),
     .rst            (rst),
@@ -314,9 +314,9 @@ assign o32_simulate0 = {3'b0,w05_IDU_GPR_rj,3'b0,w05_IDU_GPR_rk,3'b0,w05_IDU_GPR
 assign o32_simulate1 = w32_GPR_IDU_rj;
 assign o32_simulate2 = w32_GPR_IDU_rk;
 assign o32_simulate3 = w32_GPR_IDU_rd;
-assign o32_simulate4 = w32_IDU_ISU_PCnew;
-assign o32_simulate5 = {32{w01_IDU_ISU_PCmis}};
-assign o32_simulate6 = {{4{w11_IDU_EXU_func[2]}},{4{w11_IDU_EXU_func[1]}},{4{w11_IDU_EXU_func[0]}},20'bz};
+assign o32_simulate4 = w32_EXU_ISU_res;
+assign o32_simulate5 = {{16{w01_EXU_ISU_wb_en}},{16{w01_EXU_MEM_st_en}}};
+assign o32_simulate6 = {32{w01_EXU_ISU_wb_en}};
 assign o32_simulate7 = w32_IDU_EXU_wdata;
 assign o32_simulate8 = w32_IFU_IDU_inst;
 // assign o32_simulate9 = w32_IDU_EXU_rs2;

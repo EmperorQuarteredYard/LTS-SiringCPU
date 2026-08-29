@@ -1,7 +1,7 @@
 `include "define.vh"
 module RAM#(
     parameter MAX_WAIT_CYCLE = 3,//1-31，只在启用异步RAM时有效
-    parameter MAX_TASK_CYCLE = 4 //这里是任务销毁的轮数，一定不能小于MAX_WAIT_CYCLE
+    parameter MAX_KEEP_CYCLE = 4 //这里是在等待完成后保持信号周期数
 )(
     input clk,
     input rst,
@@ -59,7 +59,7 @@ assign w01_requ_exdat = r01_requ_exdat;
 assign w01_reg_valid  = r01_reg_valid;
 
 reg [4:0] r05_wait_count;
-reg [4:0] r05_task_count;
+reg [4:0] r05_keep_count;
 
 wire w01_requ_handshake;
 wire w01_resp_handshake;
@@ -94,7 +94,7 @@ always @(posedge clk) begin
         r01_requ_exdat <=  1'b0;
         r01_reg_valid  <=  1'b0;
         r05_wait_count <=  1'b0;
-        r05_task_count <=  1'b0;
+        r05_keep_count <=  1'b0;
     end
     else begin
         if(w01_requ_handshake)begin
@@ -105,19 +105,23 @@ always @(posedge clk) begin
             r04_requ_wstrb <= requ_wstrb;
             r01_requ_exdat <= requ_exdat;
             r05_wait_count <= MAX_WAIT_CYCLE;
-            r05_task_count <= MAX_TASK_CYCLE;
+            r05_keep_count <= requ_type?5'b0:MAX_KEEP_CYCLE;
             r01_reg_valid  <= 1'b1;
             r01_resp_allow <= 1'b1;
         end
         else begin
-            if(w01_resp_handshake|(r05_task_count == 5'b0))begin
-                r01_reg_valid <= 1'b0;
-                r01_requ_ready <= 1'b1;
-                r01_resp_allow <= 1'b0;
-                r01_requ_exdat <= ((r05_task_count == 5'b0))|r01_requ_exdat;
+            if(w01_resp_handshake|(r05_keep_count == 5'b0))begin
+                r01_reg_valid  <=  1'b0;
+                r01_requ_ready <=  1'b1;
+                r01_resp_allow <=  1'b0;
+                r01_requ_exdat <=  1'b0;
+                r20_requ_addr  <= 20'b0;
+                r01_requ_type  <=  1'b0;
+                r32_requ_wdata <= 32'b0;
+                r04_requ_wstrb <=  4'b0;
             end
             if (r05_wait_count != 5'b0) r05_wait_count <= r05_wait_count - 5'b1;
-            if (r05_task_count != 5'b0) r05_task_count <= r05_task_count - 5'b1;
+            else if (r05_keep_count != 5'b0) r05_keep_count <= r05_keep_count - 5'b1;
         end
     end
 

@@ -83,7 +83,7 @@ assign w01_IDU_EXU_handshake = i01_IDU_EXU_valid & o01_EXU_IDU_ready;
 assign w01_EXU_ISU_handshake = o01_EXU_ISU_valid & i01_ISU_EXU_ready;
 assign w01_EXU_MEM_handshake = o01_EXU_MEM_valid & i01_MEM_EXU_ready;
 assign o01_EXU_ISU_valid = (w01_wb_en|w01_ld_en)&w01_out_ISU_allow;//这里比较特殊，因为EXU需要将计算结果通过ISU前递给IDU；而R型指令在当前的设计中不经过MEM
-assign o01_EXU_IDU_ready = (~w01_valid|(w01_EXU_ISU_handshake&w01_wb_en)|(w01_EXU_MEM_handshake&(w01_ld_en|w01_st_en)));
+assign o01_EXU_IDU_ready = (~w01_valid|((w01_EXU_ISU_handshake|~w01_out_ISU_allow)&w01_wb_en)|((w01_EXU_MEM_handshake|~w01_out_MEM_allow)&(w01_ld_en|w01_st_en)));
 assign o01_EXU_MEM_valid = (w01_st_en|w01_ld_en)&w01_out_MEM_allow;
 
 assign w01_wb_en = w11_IDU_EXU_func[0];
@@ -114,9 +114,6 @@ always @(posedge clk) begin
         r01_out_MEM_allow <=  1'b0;
     end
     if(w01_IDU_EXU_handshake)begin
-        r01_reg_valid     <=  1'b1;
-        r01_out_ISU_allow <=  1'b1;
-        r01_out_MEM_allow <=  1'b1;
         r32_IDU_EXU_rs1   <= i32_IDU_EXU_rs1;
         r32_IDU_EXU_rs2   <= i32_IDU_EXU_rs2;
         r04_IDU_EXU_ope   <= i04_IDU_EXU_ope;
@@ -124,10 +121,26 @@ always @(posedge clk) begin
         r11_IDU_EXU_func  <= i11_IDU_EXU_func;
         r32_IDU_EXU_wdata <= i32_IDU_EXU_wdata;
         r04_IDU_EXU_wstrb <= i04_IDU_EXU_wstrb;
+        r01_reg_valid     <=  1'b1;
+        r01_out_ISU_allow <=  1'b1;
+        r01_out_MEM_allow <=  1'b1;
     end
     else begin
-        r01_out_ISU_allow<=~w01_EXU_ISU_handshake;
-        r01_out_MEM_allow<=~w01_EXU_MEM_handshake;
+        if(w01_EXU_ISU_handshake)r01_out_ISU_allow<=1'b0;
+        if(w01_EXU_MEM_handshake)r01_out_MEM_allow<=1'b0;
+        if((~(w01_out_ISU_allow&w01_wb_en))&(~(w01_out_MEM_allow&(w01_ld_en|w01_st_en))))begin
+            r01_reg_valid     <=  1'b0;
+            r01_out_ISU_allow <=  1'b0;
+            r01_out_MEM_allow <=  1'b0;
+            r32_IDU_EXU_rs1   <= 32'b0;
+            r32_IDU_EXU_rs2   <= 32'b0;
+            r04_IDU_EXU_ope   <=  4'b0;
+            r05_IDU_EXU_rd    <=  5'b0;
+            r11_IDU_EXU_func  <= 11'b0;
+            r32_IDU_EXU_wdata <= 32'b0;
+            r04_IDU_EXU_wstrb <=  4'h0;
+            
+        end
     end
 end
 endmodule

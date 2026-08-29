@@ -66,7 +66,7 @@ assign w01_RAM_req_handshake = o01_MEM_RAM_valid & i01_RAM_MEM_ready;
 assign o01_MEM_EXU_ready = (~w01_valid)|(w01_MEM_ISU_handshake)|(w01_EXU_MEM_st_en & w01_RAM_req_handshake);//当前寄存器无效/MEM阶段能成功接受/RAM成功接受ST
 assign o01_MEM_RAM_ready = i01_ISU_MEM_ready;//由RAM向ISU的端口直接透传
 assign o01_MEM_ISU_valid = i01_RAM_MEM_valid&w01_EXU_MEM_ld_en;//由RAM向ISU的端口直接透传，但这里稍加处理
-assign o01_MEM_RAM_valid = w01_valid;
+assign o01_MEM_RAM_valid = w01_valid&(w01_EXU_MEM_ld_en|w01_EXU_MEM_st_en);
 
 assign w01_valid = w01_reg_valid /*& (w01_EXU_MEM_ld_en | w01_EXU_MEM_st_en)*/;
 assign o32_MEM_ISU_data = i32_RAM_MEM_rdata;
@@ -88,13 +88,13 @@ always @(posedge clk) begin
     end 
     else begin
         if(w01_EXU_MEM_handshake)begin
-            r01_reg_valid <= 1'b1;
             r01_EXU_MEM_ld_en <= i01_EXU_MEM_ld_en;
             r01_EXU_MEM_st_en <= i01_EXU_MEM_st_en;
             r32_EXU_MEM_wdata <= i32_EXU_MEM_wdata;
             r32_EXU_MEM_addr  <= i32_EXU_MEM_addr;
             r05_EXU_MEM_rd    <= i05_EXU_MEM_rd;
             r04_EXU_MEM_wstrb <= i04_EXU_MEM_wstrb;
+            r01_reg_valid <= 1'b1;//等待装载完成后置有效
         end
         else if(w01_MEM_ISU_handshake|r01_EXU_MEM_st_en&w01_RAM_req_handshake)begin
             r01_reg_valid <= 1'b0;
