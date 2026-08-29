@@ -267,9 +267,9 @@ assign rj_en = rk_en|inst_addi_w|inst_andi|inst_ori|inst_slli_w|inst_srli_w|inst
 assign rd_en = inst_beq|inst_bne;//这两者需要立即读取ed并进行比较，且取代的是rk(src1)的位置
 assign rd_addr_set_1=inst_bl;
 assign pc_en = inst_pcaddu12i;
-assign o05_IDU_GPR_rj = rj & {5{rk_en}};
+assign o05_IDU_GPR_rj = rj & {5{rj_en}};
 assign o05_IDU_GPR_rk = rk & {5{rk_en}};
-assign o05_IDU_GPR_rd = rd & {5{rk_en}};//为了避免意外访问到不需要的、被锁存的内容，这里指定在不访问时，将访问的寄存器指定为永远不该被锁定的r0(但是不排除哪个傻蛋会把r0给锁了，那就完蛋了)
+assign o05_IDU_GPR_rd = rd & {5{rd_en}};//为了避免意外访问到不需要的、被锁存的内容，这里指定在不访问时，将访问的寄存器指定为永远不该被锁定的r0(但是不排除哪个傻蛋会把r0给锁了，那就完蛋了)
 assign o32_IDU_EXU_rs1 = i32_GPR_IDU_rj&{32{rj_en}}|w32_PC&{32{pc_en}};
 assign o32_IDU_EXU_rs2 = i32_GPR_IDU_rk&{32{rk_en}}|imm&{32{imm_en}};
 assign o32_IDU_EXU_wdata = i32_GPR_IDU_rd;
@@ -309,7 +309,7 @@ assign o04_IDU_EXU_wstrb = (op_25_22[1:0] == 2'b00)?4'b0001:
 wire beq_jump;
 assign beq_jump = (i32_GPR_IDU_rj == i32_GPR_IDU_rd);
 assign o32_IDU_ISU_PCnew = (inst_jirl?i32_GPR_IDU_rj:w32_PC) + (offs &{32{offs_en}});
-assign o01_IDU_ISU_PCmis = inst_jirl|inst_b|inst_bl|(inst_beq&beq_jump)|(inst_bne&~beq_jump);
+assign o01_IDU_ISU_PCmis = (inst_jirl|inst_b|inst_bl|(inst_beq&beq_jump)|(inst_bne&~beq_jump))&o32_IDU_ISU_PCnew!=i32_IFU_IDU_PC;
 `endif
 `ifdef ENVIRONMENT_SIMULATE
 assign o32_simulate =
@@ -338,6 +338,12 @@ always @(posedge clk) begin
             r02_PCid  <= i02_IFU_IDU_id;
             r32_inst  <= i32_IFU_IDU_inst;
             r01_valid <= 1'b1;
+        end
+        else if(w01_IDU_EXU_handshake)begin
+            r32_PC    <= 32'b0;
+            r02_PCid    <= 2'b0;
+            r32_inst  <= 32'b0;
+            r01_valid <= 1'b0;
         end
     end
 end
