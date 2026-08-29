@@ -263,8 +263,8 @@ assign offs_en = imm_offs16|imm_offs26;
 wire [31:0] mem_addr;
 wire rk_en,rj_en,pc_en,rd_en,rd_addr_set_1;
 assign rk_en = inst_add_w|inst_and|inst_mul_w|inst_or|inst_sub_w|inst_slt|inst_xor|inst_sll_w|inst_beq|inst_bne;
-assign rj_en = rk_en|inst_addi_w|inst_andi|inst_ori|inst_slli_w|inst_srli_w|inst_ld_b|inst_ld_w|inst_st_b|inst_st_w|inst_jirl;//beq，bne，bl等跳转指令需要额外考虑
-assign rd_en = inst_beq|inst_bne;//这两者需要立即读取ed并进行比较，且取代的是rk(src1)的位置
+assign rj_en = rk_en|inst_addi_w|inst_andi|inst_ori|inst_slli_w|inst_srli_w|inst_ld_x|inst_st_x|inst_jirl;//beq，bne，bl等跳转指令需要额外考虑
+assign rd_en = inst_beq|inst_bne|inst_ld_x|inst_st_x;//beq,bne需要立即读取rd并进行比较，且取代的是rk(src1)的位置
 assign rd_addr_set_1=inst_bl;
 assign pc_en = inst_pcaddu12i;
 assign o05_IDU_GPR_rj = rj & {5{rj_en}};

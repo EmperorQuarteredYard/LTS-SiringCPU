@@ -20,7 +20,7 @@ module MEM(
     output [31:0] o32_MEM_RAM_addr,
     output [31:0] o32_MEM_RAM_data,
     output        o01_MEM_RAM_type,
-    output        o04_MEM_RAM_wstrb,
+    output [ 3:0] o04_MEM_RAM_wstrb,
     input         i01_RAM_MEM_ready,
 
     input         i01_RAM_MEM_valid,
@@ -96,8 +96,14 @@ always @(posedge clk) begin
             r05_EXU_MEM_rd    <= i05_EXU_MEM_rd;
             r04_EXU_MEM_wstrb <= i04_EXU_MEM_wstrb;
         end
-        else if(w01_MEM_ISU_handshake)begin
+        else if(w01_MEM_ISU_handshake|r01_EXU_MEM_st_en&w01_RAM_req_handshake)begin
             r01_reg_valid <= 1'b0;
+            r01_EXU_MEM_ld_en <=  1'b0;
+            r01_EXU_MEM_st_en <=  1'b0;
+            r32_EXU_MEM_wdata <= 32'b0;
+            r32_EXU_MEM_addr  <= 32'b0;
+            r05_EXU_MEM_rd    <=  5'b0;
+            r04_EXU_MEM_wstrb <=  4'b0;//这几行实际上可以不用清
         end
     end
 end

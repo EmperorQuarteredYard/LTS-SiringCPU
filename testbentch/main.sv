@@ -113,9 +113,9 @@ module TOP_tb;
         INSTR_MEM[11'h008] = {`inst_ADD_W  , 5'h2, 5'h0, 5'h3};
         INSTR_MEM[11'h009] = {`inst_ADD_W  , 5'h4, 5'h0, 5'h2};
         INSTR_MEM[11'h00a] = {`inst_BNE    ,16'hfffa, 5'h6, 5'h7};
-        INSTR_MEM[11'h005] = {`inst_ST_W   ,12'h200, 5'h0, 5'h7};
-        INSTR_MEM[11'h005] = {`inst_ST_W   ,12'h204, 5'h0, 5'h7};
-        INSTR_MEM[11'h00b] = {`inst_BNE    ,16'hffff, 5'h6, 5'h7};
+        INSTR_MEM[11'h00b] = {`inst_ST_W   ,12'h200, 5'h0, 5'h7};
+        INSTR_MEM[11'h00c] = {`inst_ST_W   ,12'h204, 5'h0, 5'h7};
+        INSTR_MEM[11'h00d] = {`inst_BNE    ,16'hffff, 5'h6, 5'h7};
         // for(i = 0;i<12;i=i+1)begin
         //     $display("%08h",INSTR_MEM[i]);
         // end

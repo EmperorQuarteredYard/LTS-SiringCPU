@@ -84,7 +84,7 @@ assign w01_EXU_ISU_handshake = o01_EXU_ISU_valid & i01_ISU_EXU_ready;
 assign w01_EXU_MEM_handshake = o01_EXU_MEM_valid & i01_MEM_EXU_ready;
 assign o01_EXU_ISU_valid = (w01_wb_en|w01_ld_en)&w01_out_ISU_allow;//这里比较特殊，因为EXU需要将计算结果通过ISU前递给IDU；而R型指令在当前的设计中不经过MEM
 assign o01_EXU_IDU_ready = (~w01_valid|(w01_EXU_ISU_handshake&w01_wb_en)|(w01_EXU_MEM_handshake&(w01_ld_en|w01_st_en)));
-assign o01_EXU_MEM_valid = (w01_st_en|w01_ld_en)&r01_out_MEM_allow;
+assign o01_EXU_MEM_valid = (w01_st_en|w01_ld_en)&w01_out_MEM_allow;
 
 assign w01_wb_en = w11_IDU_EXU_func[0];
 assign w01_ld_en = w11_IDU_EXU_func[1];
