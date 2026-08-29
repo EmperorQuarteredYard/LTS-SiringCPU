@@ -29,7 +29,6 @@ module MEM(
 );
 
 reg         r01_reg_valid;
-reg         r01_EXU_MEM_valid;
 reg         r01_EXU_MEM_ld_en;
 reg         r01_EXU_MEM_st_en;
 reg  [31:0] r32_EXU_MEM_wdata;
@@ -48,7 +47,6 @@ wire  [ 4:0] w05_EXU_MEM_rd;
 wire  [ 3:0] w04_EXU_MEM_wstrb;
 
 assign w01_reg_valid     = r01_reg_valid;
-assign w01_EXU_MEM_valid = r01_EXU_MEM_valid;
 assign w01_EXU_MEM_ld_en = r01_EXU_MEM_ld_en;
 assign w01_EXU_MEM_st_en = r01_EXU_MEM_st_en;
 assign w32_EXU_MEM_wdata = r32_EXU_MEM_wdata;
@@ -70,7 +68,7 @@ assign o01_MEM_RAM_ready = i01_ISU_MEM_ready;//由RAM向ISU的端口直接透传
 assign o01_MEM_ISU_valid = i01_RAM_MEM_valid&w01_EXU_MEM_ld_en;//由RAM向ISU的端口直接透传，但这里稍加处理
 assign o01_MEM_RAM_valid = w01_valid;
 
-assign w01_valid = w01_reg_valid & (w01_EXU_MEM_ld_en | w01_EXU_MEM_st_en);
+assign w01_valid = w01_reg_valid /*& (w01_EXU_MEM_ld_en | w01_EXU_MEM_st_en)*/;
 assign o32_MEM_ISU_data = i32_RAM_MEM_rdata;
 assign o05_MEM_ISU_rd   = w05_EXU_MEM_rd;
 assign o32_MEM_RAM_addr = w32_EXU_MEM_addr;
@@ -80,7 +78,7 @@ assign o04_MEM_RAM_wstrb= w04_EXU_MEM_wstrb;
 
 always @(posedge clk) begin
     if(rst) begin
-        r01_EXU_MEM_valid <=  1'b0;
+        r01_reg_valid <=  1'b0;
         r01_EXU_MEM_ld_en <=  1'b0;
         r01_EXU_MEM_st_en <=  1'b0;
         r32_EXU_MEM_wdata <= 32'b0;
@@ -88,5 +86,16 @@ always @(posedge clk) begin
         r05_EXU_MEM_rd    <=  5'b0;
         r04_EXU_MEM_wstrb <=  4'b0;
     end 
+    else begin
+        if(w01_EXU_MEM_handshake)begin
+            r01_reg_valid <= 1'b1;
+            r01_EXU_MEM_ld_en <= i01_EXU_MEM_ld_en;
+            r01_EXU_MEM_st_en <= i01_EXU_MEM_st_en;
+            r32_EXU_MEM_wdata <= i32_EXU_MEM_wdata;
+            r32_EXU_MEM_addr  <= i32_EXU_MEM_addr;
+            r05_EXU_MEM_rd    <= i05_EXU_MEM_rd;
+            r04_EXU_MEM_wstrb <= i04_EXU_MEM_wstrb;
+        end
+    end
 end
 endmodule

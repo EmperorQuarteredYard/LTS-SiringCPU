@@ -3,7 +3,7 @@
 module TOP_tb;
 
     reg clk;
-    reg rstn;
+    reg rst;
 
     wire [19:0] BASERAM_a;
     wire [31:0] BASERAM_dq;
@@ -23,28 +23,30 @@ module TOP_tb;
     wire [31:0] o32_simulate1;
     wire [31:0] o32_simulate2;
     wire [31:0] o32_simulate3;
-    // wire [31:0] o32_simulate4;
-    // wire [31:0] o32_simulate5;
-    // wire [31:0] o32_simulate6;
-    // wire [31:0] o32_simulate7;
+    wire [31:0] o32_simulate4;
+    wire [31:0] o32_simulate5;
+    wire [31:0] o32_simulate6;
+    wire [31:0] o32_simulate7;
     wire [31:0] o32_simulate8;
-    // wire [31:0] o32_simulate9;
-    wire [31:0] o01_simulate;
+    wire [31:0] o32_simulate9;
+    // wire [31:0] o01_simulate;
+    wire [31:0] ShakeStatus;
 
     TOP u_top (
         .clk         (clk),
-        .rstn        (rstn),
-        // .o32_simulate0(o32_simulate0),
-        // .o32_simulate1(o32_simulate1),
-        // .o32_simulate2(o32_simulate2),
-        // .o32_simulate3(o32_simulate3),
-        // .o32_simulate4(o32_simulate4),
-        // .o32_simulate5(o32_simulate5),
-        // .o32_simulate6(o32_simulate6),
-        // .o32_simulate7(o32_simulate7),
-        // .o32_simulate8(o32_simulate8),
-        // .o32_simulate9(o32_simulate9),
+        .rst        (rst),
+        .o32_simulate0(o32_simulate0),
+        .o32_simulate1(o32_simulate1),
+        .o32_simulate2(o32_simulate2),
+        .o32_simulate3(o32_simulate3),
+        .o32_simulate4(o32_simulate4),
+        .o32_simulate5(o32_simulate5),
+        .o32_simulate6(o32_simulate6),
+        .o32_simulate7(o32_simulate7),
+        .o32_simulate8(o32_simulate8),
+        .o32_simulate9(o32_simulate9),
         // .o01_simulate(o01_simulate),
+        .ShakeStatus(ShakeStatus),
         .BASERAM_a   (BASERAM_a),
         .BASERAM_dq  (BASERAM_dq),
         .BASERAM_oe_n(BASERAM_oe_n),
@@ -111,6 +113,12 @@ module TOP_tb;
         INSTR_MEM[11'h008] = {`inst_ADD_W  , 5'h2, 5'h0, 5'h3};
         INSTR_MEM[11'h009] = {`inst_ADD_W  , 5'h4, 5'h0, 5'h2};
         INSTR_MEM[11'h00a] = {`inst_BNE    ,16'hfffa, 5'h6, 5'h7};
+        INSTR_MEM[11'h005] = {`inst_ST_W   ,12'h200, 5'h0, 5'h7};
+        INSTR_MEM[11'h005] = {`inst_ST_W   ,12'h204, 5'h0, 5'h7};
+        INSTR_MEM[11'h00b] = {`inst_BNE    ,16'hffff, 5'h6, 5'h7};
+        // for(i = 0;i<12;i=i+1)begin
+        //     $display("%08h",INSTR_MEM[i]);
+        // end
         /*
         INSTR_MEM[] = {`inst_,};
         */
@@ -310,7 +318,7 @@ module TOP_tb;
 
     //检查
     always @(posedge clk) begin
-        if (rstn && !check_triggered) begin
+        if (~rst && !check_triggered) begin
             if (BASERAM_a == (END_PC_PHYSICAL[21:2])) begin
                 check_triggered <= 1;
                 $display("[%0t] Trigger: BASERAM_a reached 0x%05h (Physical PC = 0x%08h)", 
@@ -327,9 +335,9 @@ module TOP_tb;
     initial begin
         test_done = 0;
         fail_cnt  = 0;
-        rstn = 0;
+        rst = 1;
         #30;
-        rstn = 1;
+        rst = 0;
         $display("[%0t] Simulation Start, waiting for PC trigger...", $time);
 
         wait(check_triggered == 1);

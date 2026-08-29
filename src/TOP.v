@@ -15,7 +15,7 @@ module TOP(
     output [31:0] o32_simulate8,
     output [31:0] o32_simulate9,
     output        o01_simulate,
-    output [15:0] ShakeStatus,
+    output [31:0] ShakeStatus,
 `endif
     output [19:0] BASERAM_a,
     inout  [31:0] BASERAM_dq,
@@ -316,18 +316,23 @@ assign o32_simulate4 = w32_IDU_EXU_rs2;
 assign o32_simulate5 = w32_IDU_EXU_wdata;
 assign o32_simulate6 = {w01_EXU_MEM_st_en,w01_EXU_MEM_ld_en,19'bz,w11_IDU_EXU_func};
 assign o32_simulate7 = w32_EXU_MEM_addr;
-// assign o32_simulate8 = ;
-// assign o32_simulate9 = ;
+assign o32_simulate8 = w32_EXU_ISU_res;
+assign o32_simulate9 = {27'bz,w05_EXU_ISU_rd};
 // assign o01_simulate  = ;
 assign ShakeStatus   = {
     w01_IFU_IDU_valid,w01_IDU_IFU_ready,
     w01_IDU_EXU_valid,w01_EXU_IDU_ready, 
     w01_EXU_MEM_valid,w01_MEM_EXU_ready,
     w01_MEM_ISU_valid,w01_ISU_MEM_ready,
+    4'bz,
     w01_RAM_IFU_valid,w01_IFU_RAM_ready,
     w01_IFU_RAM_valid,w01_RAM_IFU_ready,
+    w01_RAM_MEM_valid,w01_MEM_RAM_ready,
+    w01_MEM_RAM_valid,w01_RAM_MEM_ready,
+    4'bz,
+    w01_EXU_ISU_valid,w01_ISU_MEM_ready,
     w01_IDU_ISU_valid,w01_ISU_IDU_ready,
-     2'bz
+    4'bz
     };
 `endif
 

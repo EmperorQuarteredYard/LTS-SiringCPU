@@ -30,7 +30,7 @@ module TOP_tb;
     wire [31:0] o32_simulate8;
     wire [31:0] o32_simulate9;
     // wire [31:0] o01_simulate;
-    wire [15:0] ShakeStatus;
+    wire [31:0] ShakeStatus;
 
     TOP u_top (
         .clk         (clk),
