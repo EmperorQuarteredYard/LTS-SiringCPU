@@ -30,7 +30,7 @@ module RAM#(
     input         resp_ready     // 下游接收端的“就绪”信号：高表示CPU已准备好接收响应数据
 );
 
-`ifdef RAM_BEHAVIOR_ASYN
+`ifdef RAM_BEHAVIOR_SYNC
 //此时使用异步RAM模型
 //非对齐内存访问应当在总线中增加，但是目前并不需要做
 reg         r01_requ_ready;
@@ -105,12 +105,12 @@ always @(posedge clk) begin
             r04_requ_wstrb <= requ_wstrb;
             r01_requ_exdat <= requ_exdat;
             r05_wait_count <= MAX_WAIT_CYCLE;
-            r05_keep_count <= requ_type?5'b0:MAX_KEEP_CYCLE;
+            r05_keep_count <= requ_type?5'b1:MAX_KEEP_CYCLE;
             r01_reg_valid  <= 1'b1;
             r01_resp_allow <= 1'b1;
         end
         else begin
-            if(w01_resp_handshake|(r05_keep_count == 5'b0))begin
+            if(w01_resp_handshake|(r05_keep_count == 5'b0&r05_wait_count == 5'b0))begin
                 r01_reg_valid  <=  1'b0;
                 r01_requ_ready <=  1'b1;
                 r01_resp_allow <=  1'b0;
@@ -126,12 +126,12 @@ always @(posedge clk) begin
     end
 
 end
-`ifdef RAM_BEHAVIOR_SYNC
+`ifdef RAM_BEHAVIOR_ASYN
 这里不要改！看到这里报错了说明你在define.vh中同时开启了同步、异步RAM的定义
 wire SYNC_ASYC_ENVIRONMENT_MUTIDIFINE;
 `endif
 `else
-`ifdef RAM_BEHAVIOR_SYNC
+`ifdef RAM_BEHAVIOR_ASYN
 assign RAM_data = requ_type?requ_wdata:32'bz;
 assign RAM_addr = requ_addr;
 assign RAM_be_n = ~requ_wstrb;

@@ -27,6 +27,7 @@ module IFU(
 reg        r01_valid;
 reg [31:0] r32_pc;
 reg [31:0] r32_inst;
+reg        r01_flush;
 
 wire        w01_valid;
 wire [31:0] w32_nxt_pc;
@@ -73,17 +74,24 @@ always @(posedge clk) begin
         r01_valid <= 1'b0;
         r32_inst <= 32'b0;
         r32_pc <= `RST_PC;
+        r01_flush <= 1'b0;
     end
     else begin
         if(w01_IFU_IDU_handshake|~w01_valid)begin
-            r01_valid<=w01_RAM_res_handshake;
-            if(w01_RAM_res_handshake)begin
-                r32_inst <= i32_RAM_IFU_rdata;
-                r32_pc   <= w32_nxt_pc;
+            if(r01_flush)begin
+                r01_flush <= 0;
+            end
+            else begin
+                r01_valid<=w01_RAM_res_handshake;
+                if(w01_RAM_res_handshake)begin
+                    r32_inst <= i32_RAM_IFU_rdata;
+                    r32_pc   <= w32_nxt_pc;
+                end
             end
         end
         if(i01_ISU_IFU_PCmis)begin
             r01_valid <= 1'b0;
+            r01_flush <= 1'b1;
             r32_pc<=i32_ISU_IFU_PCnew-32'h4;
             r32_inst<=32'b0;
         end
