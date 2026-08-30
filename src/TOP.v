@@ -253,7 +253,7 @@ EXU u_EXU (
 
 
 RAM #(
-    .MAX_WAIT_CYCLE (1),
+    .MAX_WAIT_CYCLE (3),
     .MAX_KEEP_CYCLE (15)
 ) u_BASE_RAM (
     .clk            (clk),
@@ -310,15 +310,15 @@ RAM #(
 );
 
 `ifdef ENVIRONMENT_SIMULATE
-assign o32_simulate0 = {3'b0,w05_IDU_GPR_rj,3'b0,w05_IDU_GPR_rk,3'b0,w05_IDU_GPR_rd,3'b0,w05_EXU_ISU_rd};
-assign o32_simulate1 = w32_GPR_IDU_rj;
-assign o32_simulate2 = w32_GPR_IDU_rk;
-assign o32_simulate3 = w32_GPR_IDU_rd;
-assign o32_simulate4 = w32_EXU_ISU_res;
-assign o32_simulate5 = {{16{w01_EXU_ISU_wb_en}},{16{w01_EXU_MEM_st_en}}};
-assign o32_simulate6 = {32{w01_EXU_ISU_wb_en}};
-assign o32_simulate7 = w32_IDU_EXU_wdata;
-assign o32_simulate8 = w32_IFU_IDU_inst;
+assign o32_simulate0 = {3'b0,w05_IDU_GPR_rj,3'b0,w05_IDU_GPR_rk,3'b0,w05_IDU_GPR_rd,3'b0,w05_MEM_ISU_rd};
+assign o32_simulate1 = w32_MEM_ISU_data;
+assign o32_simulate2 = w32_IDU_ISU_PCnew;
+assign o32_simulate3 = {32{w01_IDU_ISU_PCmis}};
+assign o32_simulate4 = w32_IDU_EXU_rs1;
+assign o32_simulate5 = w32_IDU_EXU_rs2;
+assign o32_simulate6 = w32_IFU_IDU_PC;
+assign o32_simulate7 = {28'bz,w04_IDU_EXU_wstrb&{4{w11_IDU_EXU_func[1]}}};
+// assign o32_simulate8 = w32_IFU_IDU_inst;
 // assign o32_simulate9 = w32_IDU_EXU_rs2;
 // assign o01_simulate  = ;
 assign ShakeStatus   = {

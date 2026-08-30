@@ -89,16 +89,16 @@ always @(posedge clk) begin
     else begin
         
         if(w01_MEM_ISU_handshake)begin
-            GPR_lock[i05_MEM_ISU_rd] <= 0;//这里必须把MEM的解除锁放前面！
             GPR[i05_MEM_ISU_rd]<= i32_MEM_ISU_data;
+            GPR_lock[i05_MEM_ISU_rd] <= 0;//这里必须把MEM的解除锁放上锁前面！
         end
         if(w01_EXU_ISU_handshake)begin
             if(i01_EXU_ISU_wb_en)begin
                 GPR[i05_EXU_ISU_rd] <= i32_EXU_ISU_res;
             end
-            if(i01_EXU_MEM_ld_en & i05_MEM_ISU_rd != 5'b0 )begin
-                GPR_lock[i05_MEM_ISU_rd] <= 1;//这里实际上应当要防信号毛刺
-            end
+        end
+        if(i01_EXU_MEM_ld_en & i05_MEM_ISU_rd != 5'b0 )begin
+            GPR_lock[i05_MEM_ISU_rd] <= 1;
         end
     end 
     

@@ -235,7 +235,7 @@ assign si20 = w32_inst[24:5];
 assign si12 = w32_inst[21:10];
 assign ui12 = w32_inst[21:10];
 assign offs16 = w32_inst[25:10];
-assign offs26 = {w32_inst[9:0],w32_inst[25:0]};
+assign offs26 = {w32_inst[9:0],w32_inst[25:10]};
 
 assign imm_si20_12 = inst_lu12i_w | inst_pcaddu12i;
 assign imm_si12 = inst_addi_w | inst_ld_b | inst_ld_w | inst_st_b | inst_st_w | inst_cacop;//这里b,bl等等实际上应当触发流水线冲刷，并且将PC更新
