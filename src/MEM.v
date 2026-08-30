@@ -65,7 +65,7 @@ assign w01_RAM_req_handshake = o01_MEM_RAM_valid & i01_RAM_MEM_ready;
 
 assign o01_MEM_EXU_ready = (~w01_valid)|(w01_MEM_ISU_handshake)|(w01_EXU_MEM_st_en & w01_RAM_req_handshake);//当前寄存器无效/MEM阶段能成功接受/RAM成功接受ST
 assign o01_MEM_RAM_ready = i01_ISU_MEM_ready;//由RAM向ISU的端口直接透传
-assign o01_MEM_ISU_valid = i01_RAM_MEM_valid&w01_EXU_MEM_ld_en;//由RAM向ISU的端口直接透传，但这里稍加处理
+assign o01_MEM_ISU_valid = i01_RAM_MEM_valid;//由RAM向ISU的端口直接透传，但这里稍加处理
 assign o01_MEM_RAM_valid = w01_valid&(w01_EXU_MEM_ld_en|w01_EXU_MEM_st_en);
 
 assign w01_valid = w01_reg_valid /*& (w01_EXU_MEM_ld_en | w01_EXU_MEM_st_en)*/;

@@ -1,6 +1,10 @@
+`include "define.vh"
 module ISU(
     input clk,
     input rst,
+`ifdef ENVIRONMENT_SIMULATE
+    output [31:0] o32_simulate_ISU,
+`endif
 
 	input         i01_IDU_ISU_valid, //IDU ISU有效信号
 	input  [ 4:0] i05_IDU_GPR_rj,
@@ -77,6 +81,9 @@ assign o01_ISU_EXU_ready = 1'b1;assign o01_ISU_IDU_ready = ~(
         (i05_EXU_ISU_rd == i05_IDU_GPR_rd)
     ))
 );//如果访问到被锁存的内容，则返回"没准备好"
+`endif
+`ifdef ENVIRONMENT_SIMULATE
+assign o32_simulate_ISU = GPR[32'h16];
 `endif
 integer i;
 always @(posedge clk) begin

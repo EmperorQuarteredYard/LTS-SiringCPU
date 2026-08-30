@@ -91,6 +91,10 @@ wire [31:0] w32_RAM_IFU_rdata;
 wire [31:0] w32_RAM_MEM_rdata;
 wire [31:0] w32_simulate;
 
+`ifdef ENVIRONMENT_SIMULATE
+wire [31:0] w32_simulate_ISU;
+wire [31:0] w32_simulate_IDU;
+`endif
 //=============悬空连线=============
 
 //=============异常连线=============
@@ -102,7 +106,7 @@ IDU u_IDU (
     .rst(rst),
 
 `ifdef ENVIRONMENT_SIMULATE
-    .o32_simulate(o32_simulate9),
+    .o32_simulate(w32_simulate_IDU),
 `endif
 
     .i01_IFU_IDU_valid(w01_IFU_IDU_valid),
@@ -159,6 +163,9 @@ IFU u_IFU (
 ISU u_ISU (
     .clk(clk),
     .rst(rst),
+`ifdef ENVIRONMENT_SIMULATE
+    .o32_simulate_ISU(w32_simulate_ISU),
+`endif
 
     .i01_IDU_ISU_valid(w01_IDU_ISU_valid),
     .i05_IDU_GPR_rj(w05_IDU_GPR_rj),
@@ -282,7 +289,7 @@ RAM #(
 );
 
 RAM #(
-    .MAX_WAIT_CYCLE (1),
+    .MAX_WAIT_CYCLE (3),
     .MAX_KEEP_CYCLE (15)
 ) u_EXT_RAM (
     .clk            (clk),
@@ -314,12 +321,12 @@ assign o32_simulate0 = {3'b0,w05_IDU_GPR_rj,3'b0,w05_IDU_GPR_rk,3'b0,w05_IDU_GPR
 assign o32_simulate1 = w32_MEM_ISU_data;
 assign o32_simulate2 = w32_IDU_ISU_PCnew;
 assign o32_simulate3 = {32{w01_IDU_ISU_PCmis}};
-assign o32_simulate4 = w32_IDU_EXU_rs1;
+assign o32_simulate4 = w32_RAM_MEM_rdata;
 assign o32_simulate5 = w32_IDU_EXU_rs2;
 assign o32_simulate6 = w32_IFU_IDU_PC;
 assign o32_simulate7 = {28'bz,w04_IDU_EXU_wstrb&{4{w11_IDU_EXU_func[1]}}};
-// assign o32_simulate8 = w32_IFU_IDU_inst;
-// assign o32_simulate9 = w32_IDU_EXU_rs2;
+assign o32_simulate8 = {32{(EXTRAM_dq == 32'h6)?1:0}};
+assign o32_simulate9 = w32_simulate_ISU;
 // assign o01_simulate  = ;
 assign ShakeStatus   = {
     w01_IFU_IDU_valid,w01_IDU_IFU_ready,
