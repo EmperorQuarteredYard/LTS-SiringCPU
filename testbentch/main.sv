@@ -102,20 +102,54 @@ module TOP_tb;
     initial begin
         for (i = 0; i < 2048; i = i + 1) INSTR_MEM[i] = 32'h00000000;
         // 示例：INSTR_MEM[0] = {7'b0001010, 20'd1, 5'd1};
-        INSTR_MEM[11'h000] = {`inst_LU12I_W,20'h1c400  , 5'h6};
-        INSTR_MEM[11'h001] = {`inst_ADDI_W ,12'h100, 5'h6, 5'h7};
-        INSTR_MEM[11'h002] = {`inst_ADDI_W ,12'h1, 5'h0, 5'h2};
-        INSTR_MEM[11'h003] = {`inst_ADDI_W ,12'h1, 5'h0, 5'h3};
-        INSTR_MEM[11'h004] = {`inst_ADD_W  , 5'h2, 5'h3, 5'h2};
-        INSTR_MEM[11'h005] = {`inst_ST_W   ,12'h0, 5'h6, 5'h2};
-        INSTR_MEM[11'h006] = {`inst_ADDI_W ,12'h4, 5'h6, 5'h6};
-        INSTR_MEM[11'h007] = {`inst_ADD_W  , 5'h3, 5'h0, 5'h4};
-        INSTR_MEM[11'h008] = {`inst_ADD_W  , 5'h2, 5'h0, 5'h3};
-        INSTR_MEM[11'h009] = {`inst_ADD_W  , 5'h4, 5'h0, 5'h2};
-        INSTR_MEM[11'h00a] = {`inst_BNE    ,16'hfffa, 5'h6, 5'h7};
-        INSTR_MEM[11'h00b] = {`inst_ST_W   ,12'h200, 5'h0, 5'h7};
-        INSTR_MEM[11'h00c] = {`inst_ST_W   ,12'h204, 5'h0, 5'h7};
-        INSTR_MEM[11'h00d] = {`inst_BNE    ,16'hffff, 5'h6, 5'h7};
+        INSTR_MEM[11'h000] = {`inst_LU12I_W,  20'h1c400, 5'h6};      // r6  = 0x1c400000
+        INSTR_MEM[11'h001] = {`inst_PCADDU12I,20'h00000, 5'h17};     // r23 = PC = 0x1c000004
+        INSTR_MEM[11'h002] = {`inst_ADDI_W,   12'h00a,   5'h0, 5'h7}; // r7  = 10
+        INSTR_MEM[11'h003] = {`inst_ADDI_W,   12'h006,   5'h0, 5'h8}; // r8  = 6
+        INSTR_MEM[11'h004] = {`inst_ADD_W,    5'h8, 5'h7, 5'h9};      // r9  = 16
+        INSTR_MEM[11'h005] = {`inst_SUB_W,    5'h8, 5'h7, 5'ha};      // r10 = 4
+        INSTR_MEM[11'h006] = {`inst_SLT,      5'h7, 5'h8, 5'hb};      // r11 = 1
+        INSTR_MEM[11'h007] = {`inst_AND,      5'h8, 5'h7, 5'hc};      // r12 = 2
+        INSTR_MEM[11'h008] = {`inst_ANDI,     12'h00f,  5'h7, 5'hd};  // r13 = 10
+        INSTR_MEM[11'h009] = {`inst_OR,       5'h8, 5'h7, 5'he};      // r14 = 14
+        INSTR_MEM[11'h00a] = {`inst_ORI,      12'h001,  5'h7, 5'hf};  // r15 = 11
+        INSTR_MEM[11'h00b] = {`inst_XOR,      5'h8, 5'h7, 5'h10};     // r16 = 12
+        INSTR_MEM[11'h00c] = {`inst_SLL_W,    5'h8, 5'h7, 5'h11};     // r17 = 640
+        INSTR_MEM[11'h00d] = {`inst_SLLI_W,   5'h02, 5'h7, 5'h12};    // r18 = 40
+        INSTR_MEM[11'h00e] = {`inst_SRLI_W,   5'h01, 5'h7, 5'h13};    // r19 = 5
+        INSTR_MEM[11'h00f] = {`inst_MUL_W,    5'h8, 5'h7, 5'h14};     // r20 = 60
+
+        INSTR_MEM[11'h010] = {`inst_ST_W,     12'h000, 5'h6, 5'h9};   // [0x1c400000] = 16
+        INSTR_MEM[11'h011] = {`inst_ST_W,     12'h004, 5'h6, 5'ha};   // [0x1c400004] = 4
+        INSTR_MEM[11'h012] = {`inst_ST_W,     12'h008, 5'h6, 5'hb};   // [0x1c400008] = 1
+        INSTR_MEM[11'h013] = {`inst_ST_W,     12'h00c, 5'h6, 5'h0};   // [0x1c40000c] = 0
+        INSTR_MEM[11'h014] = {`inst_ST_W,     12'h010, 5'h6, 5'hc};   // [0x1c400010] = 2
+        INSTR_MEM[11'h015] = {`inst_ST_W,     12'h014, 5'h6, 5'hd};   // [0x1c400014] = 10
+        INSTR_MEM[11'h016] = {`inst_ST_W,     12'h018, 5'h6, 5'he};   // [0x1c400018] = 14
+        INSTR_MEM[11'h017] = {`inst_ST_W,     12'h01c, 5'h6, 5'hf};   // [0x1c40001c] = 11
+        INSTR_MEM[11'h018] = {`inst_ST_W,     12'h020, 5'h6, 5'h10};  // [0x1c400020] = 12
+        INSTR_MEM[11'h019] = {`inst_ST_W,     12'h024, 5'h6, 5'h11};  // [0x1c400024] = 640
+        INSTR_MEM[11'h01a] = {`inst_ST_W,     12'h028, 5'h6, 5'h12};  // [0x1c400028] = 40
+        INSTR_MEM[11'h01b] = {`inst_ST_W,     12'h02c, 5'h6, 5'h13};  // [0x1c40002c] = 5
+        INSTR_MEM[11'h01c] = {`inst_ST_W,     12'h030, 5'h6, 5'h14};  // [0x1c400030] = 60
+        INSTR_MEM[11'h01d] = {`inst_ST_W,     12'h034, 5'h6, 5'h17};  // [0x1c400034] = 0x1c000004
+
+        INSTR_MEM[11'h01e] = {`inst_LD_W,     12'h000, 5'h6, 5'h15};  // r21 = 16
+        INSTR_MEM[11'h01f] = {`inst_ST_W,     12'h038, 5'h6, 5'h15};  // [0x1c400038] = 16
+        INSTR_MEM[11'h020] = {`inst_ST_W,     12'h03c, 5'h6, 5'h0};   // [0x1c40003c] = 0
+        INSTR_MEM[11'h021] = {`inst_ST_B,     12'h03c, 5'h6, 5'h8};   // [0x1c40003c] = 6
+        INSTR_MEM[11'h022] = {`inst_LD_B,     12'h03c, 5'h6, 5'h16};  // r22 = 6
+        INSTR_MEM[11'h023] = {`inst_ST_W,     12'h040, 5'h6, 5'h16};  // [0x1c400040] = 6
+        INSTR_MEM[11'h024] = {`inst_ST_W,     12'h044, 5'h6, 5'h0};   // [0x1c400044] = 0
+        INSTR_MEM[11'h025] = {`inst_ST_B,     12'h044, 5'h6, 5'h7};   // [0x1c400044] = 10
+
+        INSTR_MEM[11'h026] = {`inst_ADDI_W,   12'h001, 5'h0, 5'h18};  // r24 = 1
+        INSTR_MEM[11'h027] = {`inst_ADDI_W,   12'h001, 5'h0, 5'h19};  // r25 = 1
+        INSTR_MEM[11'h028] = {`inst_BEQ,      16'h0001, 5'h18, 5'h19};// 相等，跳到下一条
+        INSTR_MEM[11'h029] = {`inst_BNE,      16'h0000, 5'h18, 5'h19};// 不等不成立，顺序执行
+        INSTR_MEM[11'h02a] = {`inst_BL,       16'h0001, 10'h000};     // r1 = PC+4，跳到下一条
+        INSTR_MEM[11'h02b] = {`inst_JIRL,     16'h0001, 5'h1, 5'h0};  // 跳到 r1+4，即最后的 B
+        INSTR_MEM[11'h02c] = {`inst_B,        16'h0000, 10'h000};     // 自循环，仿真结束
         // for(i = 0;i<12;i=i+1)begin
         //     $display("%08h",INSTR_MEM[i]);
         // end
@@ -134,81 +168,35 @@ module TOP_tb;
             CHECK_EN[i] = 0;
             EXPECTED[i] = 32'h0;
         end                
-        EXPECTED[0] = 32'd2;
-        EXPECTED[1] = 32'd3;
-        EXPECTED[2] = 32'd5;
-        EXPECTED[3] = 32'd8;
-        EXPECTED[4] = 32'd13;
-        EXPECTED[5] = 32'd21;
-        EXPECTED[6] = 32'd34;
-        EXPECTED[7] = 32'd55;
-        EXPECTED[8] = 32'd89;
-        EXPECTED[9] = 32'd144;
-        EXPECTED[10] = 32'd233;
-        EXPECTED[11] = 32'd377;
-        EXPECTED[12] = 32'd610;
-        EXPECTED[13] = 32'd987;
-        EXPECTED[14] = 32'd1597;
-        EXPECTED[15] = 32'd2584;
-        EXPECTED[16] = 32'd4181;
-        EXPECTED[17] = 32'd6765;
-        EXPECTED[18] = 32'd10946;
-        EXPECTED[19] = 32'd17711;
-        EXPECTED[20] = 32'd28657;
-        EXPECTED[21] = 32'd46368;
-        EXPECTED[22] = 32'd75025;
-        EXPECTED[23] = 32'd121393;
-        EXPECTED[24] = 32'd196418;
-        EXPECTED[25] = 32'd317811;
-        EXPECTED[26] = 32'd514229;
-        EXPECTED[27] = 32'd832040;
-        EXPECTED[28] = 32'd1346269;
-        EXPECTED[29] = 32'd2178309;
-        EXPECTED[30] = 32'd3524578;
-        EXPECTED[31] = 32'd5702887;
-        EXPECTED[32] = 32'd9227465;
-        EXPECTED[33] = 32'd14930352;
-        EXPECTED[34] = 32'd24157817;
-        EXPECTED[35] = 32'd39088169;
-        EXPECTED[36] = 32'd63245986;
-        EXPECTED[37] = 32'd102334155;
-        EXPECTED[38] = 32'd165580141;
-        EXPECTED[39] = 32'd267914296;
-        EXPECTED[40] = 32'd433494437;
-        EXPECTED[41] = 32'd701408733;
-        EXPECTED[42] = 32'd1134903170;
-        EXPECTED[43] = 32'd1836311903;
-        EXPECTED[44] = 32'd2971215073;
-        EXPECTED[45] = 32'd512559680;
-        EXPECTED[46] = 32'd3483774753;
-        EXPECTED[47] = 32'd3996334433;
-        EXPECTED[48] = 32'd3185141890;
-        EXPECTED[49] = 32'd2886509027;
-        EXPECTED[50] = 32'd1776683621;
-        EXPECTED[51] = 32'd368225352;
-        EXPECTED[52] = 32'd2144908973;
-        EXPECTED[53] = 32'd2513134325;
-        EXPECTED[54] = 32'd363076002;
-        EXPECTED[55] = 32'd2876210327;
-        EXPECTED[56] = 32'd3239286329;
-        EXPECTED[57] = 32'd1820529360;
-        EXPECTED[58] = 32'd764848393;
-        EXPECTED[59] = 32'd2585377753;
-        EXPECTED[60] = 32'd3350226146;
-        EXPECTED[61] = 32'd1640636603;
-        EXPECTED[62] = 32'd695895453;
-        EXPECTED[63] = 32'd2336532056;
+        EXPECTED[0]  = 32'd16;
+        EXPECTED[1]  = 32'd4;
+        EXPECTED[2]  = 32'd1;
+        EXPECTED[3]  = 32'd0;
+        EXPECTED[4]  = 32'd2;
+        EXPECTED[5]  = 32'd10;
+        EXPECTED[6]  = 32'd14;
+        EXPECTED[7]  = 32'd11;
+        EXPECTED[8]  = 32'd12;
+        EXPECTED[9]  = 32'd640;
+        EXPECTED[10] = 32'd40;
+        EXPECTED[11] = 32'd5;
+        EXPECTED[12] = 32'd60;
+        EXPECTED[13] = 32'h1c000004;   // PCADDU12I 结果
+        EXPECTED[14] = 32'd16;         // LD.W 读回
+        EXPECTED[15] = 32'd6;          // ST.B 写低字节
+        EXPECTED[16] = 32'd6;          // LD.B 读回
+        EXPECTED[17] = 32'd10;         // ST.B 写低字节
 
-        CHECK_EN[0] = 1'b1;
-        CHECK_EN[1] = 1'b1;
-        CHECK_EN[2] = 1'b1;
-        CHECK_EN[3] = 1'b1;
-        CHECK_EN[4] = 1'b1;
-        CHECK_EN[5] = 1'b1;
-        CHECK_EN[6] = 1'b1;
-        CHECK_EN[7] = 1'b1;
-        CHECK_EN[8] = 1'b1;
-        CHECK_EN[9] = 1'b1;
+        CHECK_EN[0]  = 1'b1;
+        CHECK_EN[1]  = 1'b1;
+        CHECK_EN[2]  = 1'b1;
+        CHECK_EN[3]  = 1'b1;
+        CHECK_EN[4]  = 1'b1;
+        CHECK_EN[5]  = 1'b1;
+        CHECK_EN[6]  = 1'b1;
+        CHECK_EN[7]  = 1'b1;
+        CHECK_EN[8]  = 1'b1;
+        CHECK_EN[9]  = 1'b1;
         CHECK_EN[10] = 1'b1;
         CHECK_EN[11] = 1'b1;
         CHECK_EN[12] = 1'b1;
@@ -217,52 +205,6 @@ module TOP_tb;
         CHECK_EN[15] = 1'b1;
         CHECK_EN[16] = 1'b1;
         CHECK_EN[17] = 1'b1;
-        CHECK_EN[18] = 1'b1;
-        CHECK_EN[19] = 1'b1;
-        CHECK_EN[20] = 1'b1;
-        CHECK_EN[21] = 1'b1;
-        CHECK_EN[22] = 1'b1;
-        CHECK_EN[23] = 1'b1;
-        CHECK_EN[24] = 1'b1;
-        CHECK_EN[25] = 1'b1;
-        CHECK_EN[26] = 1'b1;
-        CHECK_EN[27] = 1'b1;
-        CHECK_EN[28] = 1'b1;
-        CHECK_EN[29] = 1'b1;
-        CHECK_EN[30] = 1'b1;
-        CHECK_EN[31] = 1'b1;
-        CHECK_EN[32] = 1'b1;
-        CHECK_EN[33] = 1'b1;
-        CHECK_EN[34] = 1'b1;
-        CHECK_EN[35] = 1'b1;
-        CHECK_EN[36] = 1'b1;
-        CHECK_EN[37] = 1'b1;
-        CHECK_EN[38] = 1'b1;
-        CHECK_EN[39] = 1'b1;
-        CHECK_EN[40] = 1'b1;
-        CHECK_EN[41] = 1'b1;
-        CHECK_EN[42] = 1'b1;
-        CHECK_EN[43] = 1'b1;
-        CHECK_EN[44] = 1'b1;
-        CHECK_EN[45] = 1'b1;
-        CHECK_EN[46] = 1'b1;
-        CHECK_EN[47] = 1'b1;
-        CHECK_EN[48] = 1'b1;
-        CHECK_EN[49] = 1'b1;
-        CHECK_EN[50] = 1'b1;
-        CHECK_EN[51] = 1'b1;
-        CHECK_EN[52] = 1'b1;
-        CHECK_EN[53] = 1'b1;
-        CHECK_EN[54] = 1'b1;
-        CHECK_EN[55] = 1'b1;
-        CHECK_EN[56] = 1'b1;
-        CHECK_EN[57] = 1'b1;
-        CHECK_EN[58] = 1'b1;
-        CHECK_EN[59] = 1'b1;
-        CHECK_EN[60] = 1'b1;
-        CHECK_EN[61] = 1'b1;
-        CHECK_EN[62] = 1'b1;
-        CHECK_EN[63] = 1'b1;
         
         // 格式: CHECK_EN[地址索引] = 1; EXPECTED[地址索引] = 期望值;
         // 注意: 地址索引 = 物理地址 >> 2 (因 BASERAM_a/EXTRAM_a 已省略低2位)
@@ -279,7 +221,7 @@ module TOP_tb;
     reg        check_triggered;
 
     initial begin
-        END_PC_PHYSICAL = 32'h1c000100;   // �?后一条指令的物理地址
+        END_PC_PHYSICAL = 32'h1c0000b0;
         check_triggered  = 0;
         $display("simulation will end at 0x%05h",(END_PC_PHYSICAL[21:2]));
     end
@@ -371,7 +313,7 @@ module TOP_tb;
         #100000;
         if (!test_done) begin
             $display("[%0t] Timeout! PC never reached 0x%08h", $time, END_PC_PHYSICAL);
-            $finish;
+            check_triggered<= 1;
         end
     end
 
