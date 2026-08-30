@@ -3,8 +3,8 @@
 `define INSTRUCTION_LENGTH 32
 `define ENVIRONMENT_FPGA
 `define ENVIRONMENT_SIMULATE
-`define RAM_BEHAVIOR_SYNC // 在需要同步RAM时，开启此选项
-// `define  RAM_BEHAVIOR_ASYN// 在需要异步RAM时，开启此选项。注意和上面的一起开启或者都不开会报错
+// `define RAM_BEHAVIOR_SYNC // 在需要同步RAM时，开启此选项
+`define  RAM_BEHAVIOR_ASYN// 在需要异步RAM时，开启此选项。注意和上面的一起开启或者都不开会报错
 `define BASE_RAM_PRE_ADDR    10'b0001110000
 `define EXT_RAM_PRE_ADDR     10'b0001110001
 `define UART_WINDOW_PRE_ADDR 12'b000111110000

@@ -297,7 +297,7 @@ assign o04_IDU_EXU_ope =`alu_opadd & {4{inst_lu12i_w|inst_pcaddu12i|inst_addi_w|
                     // `alu_oprcl  & {4{0}}|
                     // `alu_oprc   & {4{0}};
 assign o11_IDU_EXU_func = {1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,inst_st_x,inst_ld_x,rd_wb_en|inst_bl};
-assign o05_IDU_EXU_rd   = rd & {5{rd_wb_en}} | {4'b0,inst_bl};
+assign o05_IDU_EXU_rd   = rd & {5{rd_wb_en|inst_ld_x}} | {4'b0,inst_bl};
 assign o04_IDU_EXU_wstrb = (op_25_22[1:0] == 2'b00)?4'b0001:
                        (op_25_22[1:0] == 2'b01)?4'b0011:
                        4'b1111;
