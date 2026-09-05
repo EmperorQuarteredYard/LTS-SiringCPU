@@ -14,4 +14,4 @@ b, bl, beq, bne, jirl,
 mul.w
 支持EXTRAM、BASERAM，暂不支持UART操作
 ## 如何开始
-由于本项目当前没有用到任何IP核，可以导入/src下的所有设计文件，/constraints下的约束文件，/testbench下的任意仿真文件进行仿真，推荐使用main.sv及其内置的指令设定代码
+由于本项目当前没有用到任何IP核，可以导入/src下的所有设计文件，/constraints下的约束文件，/testbench下的任意仿真文件进行仿真，推荐使用main.sv及其内置的指令设定代码。注意，当仿真时，请取消注释src/define.vh的ENVIRONMENT_SIMULATE定义行
