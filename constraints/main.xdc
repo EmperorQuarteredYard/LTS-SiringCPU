@@ -1,7 +1,7 @@
 # Clock
 set_property -dict {PACKAGE_PIN K21 IOSTANDARD LVCMOS33} [get_ports clk]
 
-create_clock -period 200.000 -name clk -waveform {0.000 10.000} [get_ports clk]
+create_clock -period 40.000 -name clk -waveform {0.000 20.000} [get_ports clk]
 
 #Touch Button
 set_property -dict {PACKAGE_PIN U5 IOSTANDARD LVCMOS33} [get_ports rst]
